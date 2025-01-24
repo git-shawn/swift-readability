@@ -5,7 +5,11 @@ import PackageDescription
 
 let package = Package(
     name: "swift-readability",
-    platforms: [.macOS(.v10_15), .iOS(.v13), .watchOS(.v6)],
+    platforms: [
+        .macOS(.v11),
+        .iOS(.v14),
+        .watchOS(.v7)
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
@@ -13,14 +17,16 @@ let package = Package(
             targets: ["Readability"]
         ),
     ],
-    dependencies: [
-    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "Readability",
-            dependencies: [
+            resources: [
+                .copy("../../node_modules/@mozilla/readability/Readability.js"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
             ]
         ),
         .testTarget(
