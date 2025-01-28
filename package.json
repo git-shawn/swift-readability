@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "@mozilla/readability": "^0.5.0"
+    "@mozilla/readability": "^0.5.0",
+    "dompurify": "^3.2.3"
   },
   "devDependencies": {
     "webpack": "^5.97.1",
