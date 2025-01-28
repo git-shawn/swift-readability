@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import JavaScriptCore
 
 @MainActor
 final class ReadabilityRunner {
@@ -14,22 +15,31 @@ final class ReadabilityRunner {
         self.webView.navigationDelegate = navigationDelegate
     }
 
-    func parseHTML(_ html: String, baseURL: URL? = nil) async throws -> ReadabilityResult {
-        try await loadHTML(html, baseURL: baseURL)
-        let articleJSON = try await parseWithReadability()
+    func parseHTML(
+        _ html: String,
+        options: Readability.Options?,
+        baseURL: URL? = nil
+    ) async throws -> ReadabilityResult {
+        await loadHTML(html, baseURL: baseURL)
+
+        let articleJSON = try await parseWithReadability(options: options)
+
         guard let data = articleJSON.data(using: .utf8) else {
             throw Error.failedToConvertToData
         }
+
         return try JSONDecoder().decode(ReadabilityResult.self, from: data)
     }
+}
 
-    private func loadHTML(_ html: String, baseURL: URL?) async throws {
+extension ReadabilityRunner {
+    private func loadHTML(_ html: String, baseURL: URL?) async {
         webView.loadHTMLString(html, baseURL: baseURL)
-        try await navigationDelegate.waitForNavigationFinished()
+        await navigationDelegate.waitForNavigationFinished()
     }
 
-    private func parseWithReadability() async throws -> String {
-        let script = try await scriptGenerator.generateNonInteractiveScript()
+    private func parseWithReadability(options: Readability.Options?) async throws -> String {
+        let script = try await scriptGenerator.generateNonInteractiveScript(options: options)
 
         guard let result = try await webView.evaluateJavaScript(script)
         else {
@@ -47,15 +57,15 @@ extension ReadabilityRunner {
 }
 
 private final class NavigationDelegate: NSObject, WKNavigationDelegate {
-    private var continuation: CheckedContinuation<Void, Error>?
+    private var continuation: CheckedContinuation<Void, Never>?
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         continuation?.resume(returning: ())
         continuation = nil
     }
 
-    func waitForNavigationFinished() async throws {
-        try await withCheckedThrowingContinuation { continuation in
+    func waitForNavigationFinished() async {
+        await withCheckedContinuation { continuation in
             self.continuation = continuation
         }
     }

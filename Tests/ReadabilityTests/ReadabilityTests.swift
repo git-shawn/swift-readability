@@ -4,6 +4,7 @@ import Foundation
 
 @Test func example() async throws {
     // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-    let response = try await Readability.parse(url: URL(string: "https://qiita.com/kanuma1984/items/c158162adfeb6b217973")!)
-    print(response)
+    let html = try await HTMLFetcher().fetch(url: URL(string: "https://qiita.com/Ryu0118/items/851a96eb1d362ecce11f")!)
+    let result = try await ReadabilityRunner().parse(html: html, options: nil)
+    print(result.textContent)
 }

@@ -8,7 +8,7 @@ let package = Package(
     platforms: [
         .macOS(.v11),
         .iOS(.v14),
-        .watchOS(.v7)
+        .visionOS(.v1)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -24,6 +24,7 @@ let package = Package(
             name: "Readability",
             resources: [
                 .copy("../../node_modules/@mozilla/readability/Readability.js"),
+                .copy("../../node_modules/@mozilla/readability/Readability-readerable.js"),
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6)

@@ -8,13 +8,14 @@ struct ReaderWebView: View {
     @State var configuration: WKWebViewConfiguration?
     @State var isLoading = false
     @State var urlString = ""
+    @State var isPresented = true
 
     var body: some View {
         WebViewReader { proxy in
             if let configuration {
                 WebView(configuration: configuration)
                     .uiDelegate(ReaderUIDelegate())
-                    .searchable(text: $urlString, isPresented: .constant(true))
+                    .searchable(text: $urlString, isPresented: $isPresented)
                     .onSubmit(of: .search) {
                         withLoading {
                             if let url = URL(string: urlString) {

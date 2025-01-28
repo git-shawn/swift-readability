@@ -5,17 +5,19 @@ struct ReaderTextView: View {
     @State var content: String = ""
     @State var urlString: String = ""
     @State var isLoading = false
+    @State var isPresented = true
+
+    private let readability = Readability()
 
     var body: some View {
         ScrollView {
             Text(content)
         }
-        .launchReadabilityDaemon()
-        .searchable(text: $urlString, isPresented: .constant(true))
+        .searchable(text: $urlString, isPresented: $isPresented)
         .onSubmit(of: .search) {
             if let url = URL(string: urlString) {
                 withLoading {
-                    content = try await Readability.parse(url: url).textContent ?? ""
+                    content = try await readability.parse(url: url).textContent ?? ""
                 }
             }
         }
