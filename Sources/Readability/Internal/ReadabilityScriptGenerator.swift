@@ -1,6 +1,5 @@
 import Foundation
-
-typealias JavaScriptString = String
+import ReadabilityCore
 
 actor ReadabilityScriptGenerator: Sendable  {
     private let encoder = {

@@ -13,7 +13,18 @@ struct ContentView: View {
                 NavigationLink("ReaderTextView") {
                     ReaderTextView()
                 }
+                NavigationLink("ReadabilityUI") {
+                    Hoge()
+                }
             }
+        }
+    }
+}
+
+struct Hoge: View {
+    var body: some View {
+        NavigationLink("ReadabilityUI") {
+            ReadabilityUIView()
         }
     }
 }

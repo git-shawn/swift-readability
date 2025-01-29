@@ -8,7 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		426477962D42D0C300525E86 /* WebUI in Frameworks */ = {isa = PBXBuildFile; productRef = 426477952D42D0C300525E86 /* WebUI */; };
-		426477E72D436CB600525E86 /* Readability in Frameworks */ = {isa = PBXBuildFile; productRef = 426477E62D436CB600525E86 /* Readability */; };
+		42C9CCD42D49F867001EFE8F /* ReadabilityUI in Frameworks */ = {isa = PBXBuildFile; productRef = 42C9CCD32D49F867001EFE8F /* ReadabilityUI */; };
+		42C9CCE72D49F95F001EFE8F /* Readability in Frameworks */ = {isa = PBXBuildFile; productRef = 42C9CCE62D49F95F001EFE8F /* Readability */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,7 +31,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				426477962D42D0C300525E86 /* WebUI in Frameworks */,
-				426477E72D436CB600525E86 /* Readability in Frameworks */,
+				42C9CCE72D49F95F001EFE8F /* Readability in Frameworks */,
+				42C9CCD42D49F867001EFE8F /* ReadabilityUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,7 +85,8 @@
 			name = ReadabilityTest;
 			packageProductDependencies = (
 				426477952D42D0C300525E86 /* WebUI */,
-				426477E62D436CB600525E86 /* Readability */,
+				42C9CCD32D49F867001EFE8F /* ReadabilityUI */,
+				42C9CCE62D49F95F001EFE8F /* Readability */,
 			);
 			productName = ReadabilityTest;
 			productReference = 42C736A72D42C13D0065FFAD /* ReadabilityTest.app */;
@@ -372,7 +375,11 @@
 			package = 426477942D42D0C300525E86 /* XCRemoteSwiftPackageReference "WebUI" */;
 			productName = WebUI;
 		};
-		426477E62D436CB600525E86 /* Readability */ = {
+		42C9CCD32D49F867001EFE8F /* ReadabilityUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReadabilityUI;
+		};
+		42C9CCE62D49F95F001EFE8F /* Readability */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Readability;
 		};

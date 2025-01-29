@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import ReadabilityCore
 
 @MainActor
 public struct Readability {

@@ -16,12 +16,19 @@ let package = Package(
             name: "Readability",
             targets: ["Readability"]
         ),
+        .library(
+            name: "ReadabilityUI",
+            targets: ["ReadabilityUI"]
+        ),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "Readability",
+            dependencies: [
+                "ReadabilityCore"
+            ],
             resources: [
                 .copy("../../node_modules/@mozilla/readability/Readability.js"),
                 .copy("../../node_modules/@mozilla/readability/Readability-readerable.js"),
@@ -29,6 +36,21 @@ let package = Package(
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
+        ),
+        .target(
+            name: "ReadabilityUI",
+            dependencies: [
+                "ReadabilityCore"
+            ],
+            resources: [
+                .process("Resources")
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
+        .target(
+            name: "ReadabilityCore"
         ),
         .testTarget(
             name: "ReadabilityTests",

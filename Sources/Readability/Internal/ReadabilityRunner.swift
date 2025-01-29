@@ -1,6 +1,6 @@
 import SwiftUI
 import WebKit
-import JavaScriptCore
+import ReadabilityCore
 
 @MainActor
 final class ReadabilityRunner {
@@ -41,7 +41,7 @@ extension ReadabilityRunner {
     private func parseWithReadability(options: Readability.Options?) async throws -> String {
         let script = try await scriptGenerator.generateNonInteractiveScript(options: options)
 
-        guard let result = try await webView.evaluateJavaScript(script)
+        guard let result = try await webView.evaluateJavaScript(script) as? String
         else {
             throw Error.failedToEvaluateJavaScript
         }
