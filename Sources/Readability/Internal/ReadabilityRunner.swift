@@ -53,9 +53,11 @@ final class ReadabilityRunner {
                 switch event {
                 case let .contentParsed(readabilityResult):
                     continuation.resume(returning: readabilityResult)
+                    self?.messageHandler?.subscribeEvent(nil)
                 case let .availabilityChanged(availability):
                     if availability == .unavailable {
                         continuation.resume(throwing: Error.readerIsUnavailable)
+                        self?.messageHandler?.subscribeEvent(nil)
                     }
                 default:
                     break

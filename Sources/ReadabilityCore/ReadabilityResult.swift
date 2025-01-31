@@ -4,7 +4,7 @@ public typealias JavaScriptString = String
 
 public struct ReadabilityResult: Decodable, Sendable {
     public let title: String
-    public let byline: String
+    public let byline: String?
     public let content: String
     public let textContent: String
     public let length: Int

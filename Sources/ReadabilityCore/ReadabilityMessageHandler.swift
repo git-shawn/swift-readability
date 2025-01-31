@@ -57,7 +57,7 @@ package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratabl
         }
     }
 
-    package func subscribeEvent(_ operation: @MainActor @Sendable @escaping (Event) -> Void) {
+    package func subscribeEvent(_ operation: (@MainActor @Sendable (Event) -> Void)?) {
         eventHandler = operation
     }
 }

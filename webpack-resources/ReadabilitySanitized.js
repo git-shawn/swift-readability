@@ -20,4 +20,5 @@ const clean = DOMPurify.sanitize(docStr, {WHOLE_DOCUMENT: true});
 var doc = new DOMParser().parseFromString(clean, "text/html");
 var readability = new Readability(doc, __READABILITY_OPTION__);
 const readabilityResult = readability.parse();
+
 webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "ContentParsed", Value: JSON.stringify(readabilityResult)});

@@ -39,7 +39,7 @@ struct ReaderWebView: View {
                         if let html {
                             Button {
                                 if isReaderPresenting, let url = URL(string: urlString) {
-                                    proxy.goBack()
+                                    proxy.load(request: URLRequest(url: url))
                                 } else {
                                     proxy.loadHTMLString(html, baseURL: nil)
                                 }
