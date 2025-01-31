@@ -5,13 +5,16 @@
 import Foundation
 import ReadabilityCore
 
-struct ReaderContentGenerator {
-    private let encoder = JSONEncoder()
-    private let scriptLoader = ScriptLoader()
+struct ReaderContentGenerator: ReaderContentGeneratable {
+    private let encoder = {
+        let encoder = JSONEncoder()
+        return encoder
+    }()
+    private let scriptLoader = ScriptLoader(bundle: .module)
 
     func generate(
         _ readabilityResult: ReadabilityResult,
-        initialStyle: ReaderModeStyle
+        initialStyle: ReaderStyle
     ) async -> String? {
         guard let template = try? await scriptLoader.load(.readerHTML),
               let styleData = try? encoder.encode(initialStyle),

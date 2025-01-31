@@ -17,7 +17,7 @@ struct ReaderTextView: View {
         .onSubmit(of: .search) {
             if let url = URL(string: urlString) {
                 withLoading {
-                    content = try await readability.parse(url: url).textContent ?? ""
+                    content = try await readability.parse(url: url, options: Readability.Options(shouldSanitize: true)).textContent
                 }
             }
         }

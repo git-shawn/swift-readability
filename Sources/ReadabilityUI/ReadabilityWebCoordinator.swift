@@ -4,87 +4,106 @@ import ReadabilityCore
 
 @MainActor
 public final class ReadabilityWebCoordinator: ObservableObject {
-    private let scriptLoader = ScriptLoader()
-    private weak var messageHandler: ReadabilityMessageHandler?
+    private weak var messageHandler: ReadabilityMessageHandler<ReaderContentGenerator>?
     private weak var configuration: WKWebViewConfiguration?
 
-    public init() {
+    private let scriptLoader = ScriptLoader(bundle: .module)
+    private let messageHandlerName = "readabilityMessageHandler"
+
+    private var contentParsed: (@Sendable (_ html: String) -> Void)?
+    private var availabilityChanged: (@Sendable (_ availability: ReaderAvailability) -> Void)?
+
+    public let initialStyle: ReaderStyle
+
+    public init(initialStyle: ReaderStyle) {
+        self.initialStyle = initialStyle
     }
 
     public func createReadableWebViewConfiguration() async throws -> WKWebViewConfiguration {
-        let script = try await scriptLoader.load(.atDocumentStart)
+        async let documentStartStringTask = scriptLoader.load(.atDocumentStart)
+        async let documentEndStringTask = scriptLoader.load(.atDocumentEnd)
+
+        let (documentStartString, documentEndString) = try await (documentStartStringTask, documentEndStringTask)
 
         let documentStartScript = WKUserScript(
-            source: script,
+            source: documentStartString,
             injectionTime: .atDocumentStart,
-            forMainFrameOnly: true,
+            forMainFrameOnly: false,
             in: .defaultClient
         )
+
         let documentEndScript = WKUserScript(
-            source: "window.__swift_readability__.checkReadability()",
+            source: documentEndString,
             injectionTime: .atDocumentEnd,
-            forMainFrameOnly: true,
+            forMainFrameOnly: false,
             in: .defaultClient
         )
 
         let configuration = WKWebViewConfiguration()
-        let messageHandler = ReadabilityMessageHandler()
+        let messageHandler = ReadabilityMessageHandler(
+            mode: .generateReaderHTML(initialStyle: initialStyle),
+            readerContentGenerator: ReaderContentGenerator()
+        )
+
         self.configuration = configuration
         self.messageHandler = messageHandler
 
         configuration.userContentController.addUserScript(documentStartScript)
         configuration.userContentController.addUserScript(documentEndScript)
-        configuration.userContentController.add(messageHandler, contentWorld: .defaultClient, name: "readabilityMessageHandler")
+        configuration.userContentController.add(messageHandler, contentWorld: .defaultClient, name: messageHandlerName)
+
+        messageHandler.eventHandler = { [weak self] event in
+            switch event {
+            case .availabilityChanged(let availability):
+                self?.availabilityChanged?(availability)
+            case .contentParsedAndGeneratedHTML(html: let html):
+                self?.contentParsed?(html)
+            case .contentParsed:
+                break
+            }
+        }
 
         return configuration
     }
 
     deinit {
         MainActor.assumeIsolated {
-            configuration?.userContentController.removeScriptMessageHandler(forName: "readabilityMessageHandler", contentWorld: .defaultClient)
+            configuration?.userContentController.removeScriptMessageHandler(forName: messageHandlerName, contentWorld: .defaultClient)
             configuration?.userContentController.removeAllUserScripts()
         }
     }
 
-    public func contentParsed(_ operation: @Sendable @escaping (String) -> Void) {
-        messageHandler?.contentParsed = operation
+    public func contentParsed(_ operation: @Sendable @escaping (_ html: String) -> Void) {
+        self.contentParsed = operation
+    }
+
+    public func availabilityChanged(_ operation: @Sendable @escaping (_ availability: ReaderAvailability) -> Void) {
+        self.availabilityChanged = operation
     }
 }
 
 public extension View {
-    func onReadabilityContentParsed(
+    func onReadableContentParsed(
         using coordinator: ReadabilityWebCoordinator,
-        perform action: @Sendable @escaping (String) -> Void
+        perform action: @MainActor @Sendable @escaping (_ html: String) -> Void
     ) -> some View {
         onAppear {
-            coordinator.contentParsed(action)
+            coordinator.contentParsed { html in
+                Task { @MainActor in
+                    action(html)
+                }
+            }
         }
     }
-}
 
-final class ReadabilityMessageHandler: NSObject, WKScriptMessageHandler {
-    private let readerContentGenerator = ReaderContentGenerator()
-    var contentParsed: (@Sendable (String) -> Void)?
-
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let message = message.body as? [String: Any],
-              let typeString = message["Type"] as? String,
-              let type = ReadabilityMessageType(rawValue: typeString),
-              let value = message["Value"]
-        else {
-            return
-        }
-        switch type {
-        case .stateChange:
-            print(value)
-        case .contentParsed:
-            Task.detached { [weak self] in
-                if let valueDic = value as? [String: Any],
-                   let data = try? JSONSerialization.data(withJSONObject: valueDic, options: []),
-                   let result = try? JSONDecoder().decode(ReadabilityResult.self, from: data),
-                   let html = await self?.readerContentGenerator.generate(result, initialStyle: .init(theme: .dark, fontSize: .size8))
-                {
-                    await self?.contentParsed?(html)
+    func onReaderAvailabilityChanged(
+        using coordinator: ReadabilityWebCoordinator,
+        perform action: @MainActor @Sendable @escaping (_ availability: ReaderAvailability) -> Void
+    ) -> some View {
+        onAppear {
+            coordinator.availabilityChanged { availability in
+                Task { @MainActor in
+                    action(availability)
                 }
             }
         }

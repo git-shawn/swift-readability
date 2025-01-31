@@ -1,4 +1,3 @@
-/* vim: set ts=2 sts=2 sw=2 et tw=80: */
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
@@ -27,7 +26,7 @@ function debug(s) {
 function checkReadability() {
     setTimeout(function() {
         if(!isProbablyReaderable(document)) {
-            webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: "Unavailable"});
+            postStateChangedToUnavailable()
             return;
         }
 
@@ -35,9 +34,8 @@ function checkReadability() {
             // Short circuit in case we already ran Readability. This mostly happens when going
             // back/forward: the page will be cached and the result will still be there.
             if (readabilityResult && readabilityResult.content) {
-                debug({Type: "StateChange", Value: "Available"});
-                webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: "Available"});
-                webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "ContentParsed", Value: readabilityResult});
+                postStateChangedToAvailable();
+                postContentParsed(readabilityResult);
                 return;
             }
 
@@ -56,8 +54,7 @@ function checkReadability() {
             // Do not attempt to parse DOM if this document contains a <frameset/>
             // element. This causes the WKWebView 1content process to crash (Bug 1489543).
             if (docStr.indexOf("<frameset ") > -1) {
-                debug({Type: "StateChange", Value: "Unavailable"});
-                webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: "Unavailable"});
+                postStateChangedToUnavailable();
                 return;
             }
 
@@ -68,8 +65,7 @@ function checkReadability() {
             readabilityResult = readability.parse();
 
             if (!readabilityResult) {
-                debug({Type: "StateChange", Value: "Unavailable"});
-                webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: "Unavailable"});
+                postStateChangedToUnavailable()
                 return;
             }
 
@@ -78,15 +74,36 @@ function checkReadability() {
             // Sanitize the byline to prevent a malicious page from inserting HTML in the `<byline>`.
             readabilityResult.byline = escapeHTML(readabilityResult.byline);
 
-            debug({Type: "StateChange", Value: readabilityResult !== null ? "Available" : "Unavailable"});
-            webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: readabilityResult !== null ? "Available" : "Unavailable"});
-            webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "ContentParsed", Value: readabilityResult});
+            postStateChanged(readabilityResult !== null ? "Available" : "Unavailable")
+            postContentParsed(readabilityResult)
             return;
         }
 
-        debug({Type: "StateChange", Value: "Unavailable"});
-        webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: "Unavailable"});
+        postStateChangedToUnavailable();
     }, 100);
+}
+
+function postContentParsed(readabilityResult) {
+    webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "ContentParsed", Value: JSON.stringify(readabilityResult)});
+}
+
+function postStateChangedToAvailable() {
+    postStateChanged("Available")
+}
+
+function postStateChangedToUnavailable() {
+    postStateChanged("Unavailable")
+}
+
+function postStateChanged(value) {
+    if (!isCurrentPageReader()) {
+        debug({Type: "StateChange", Value: value});
+        webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: value});
+    }
+}
+
+function isCurrentPageReader() {
+    return document.getElementById("reader-content") && document.getElementById("reader-header") && document.getElementById("reader-title") && document.getElementById("reader-credits");
 }
 
 // Readerize the document. Since we did the actual readerization already in checkReadability, we
@@ -169,26 +186,17 @@ function updateImageMargins() {
     }
 }
 
-function showContent() {
-    var headerElement = document.getElementById("reader-header");
-    if (headerElement) {
-        headerElement.style.display = "block"
-    }
-    var contentElement = document.getElementById("reader-content");
-    if (contentElement) {
-        contentElement.style.display = "block";
-    }
-}
-
 function configureReader() {
+    if (!isCurrentPageReader()) {
+        return;
+    }
     // Configure the reader with the initial style that was injected in the page.
-    var style = JSON.parse(document.body.getAttribute("data-readerStyle"));
+    var style = JSON.parse(document.body.getAttribute("data-readerstyle"));
     setStyle(style);
 
     // The order here is important. Because updateImageMargins depends on contentElement.offsetWidth which
     // will not be set until contentElement is visible. If this leads to annoying content reflowing then we
     // need to look at an alternative way to do
-    showContent();
     updateImageMargins();
 }
 
@@ -214,8 +222,6 @@ Object.defineProperty(window, "__swift_readability__", {
     })
 });
 
-if (document.readyState === 'complete') {
-  configureReader();
-} else {
-  window.addEventListener('load', configureReader);
-}
+window.addEventListener("load", function(event) {
+    configureReader();
+});

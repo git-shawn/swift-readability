@@ -4,15 +4,25 @@ import ReadabilityCore
 
 @MainActor
 final class ReadabilityRunner {
-    let webView: WKWebView
+    private let webView: WKWebView
 
-    private let navigationDelegate = NavigationDelegate()
-    private let scriptGenerator = ReadabilityScriptGenerator()
+    private weak var messageHandler: ReadabilityMessageHandler<EmptyContentGenerator>?
+    private let scriptLoader = ScriptLoader(bundle: .module)
+    private let encoder = JSONEncoder()
+
+    private var transaction = false
 
     init() {
         let configuration = WKWebViewConfiguration()
+        let messageHandler = ReadabilityMessageHandler(
+            mode: .generateReadabilityResult,
+            readerContentGenerator: EmptyContentGenerator()
+        )
+
+        configuration.userContentController.add(messageHandler, contentWorld: .defaultClient, name: "readabilityMessageHandler")
+
+        self.messageHandler = messageHandler
         self.webView = WKWebView(frame: .zero, configuration: configuration)
-        self.webView.navigationDelegate = navigationDelegate
     }
 
     func parseHTML(
@@ -20,53 +30,60 @@ final class ReadabilityRunner {
         options: Readability.Options?,
         baseURL: URL? = nil
     ) async throws -> ReadabilityResult {
-        await loadHTML(html, baseURL: baseURL)
+        let shouldSanitize = options?.shouldSanitize ?? false
+        let script = try await scriptLoader
+            .load(shouldSanitize ? .readabilitySanitized : .readabilityBasic)
+            .replacingOccurrences(
+                of: "__READABILITY_OPTION__",
+                with: try generateJSONOptions(options: options)
+            )
 
-        let articleJSON = try await parseWithReadability(options: options)
+        let endScript = WKUserScript(
+            source: script,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true,
+            in: .defaultClient
+        )
 
-        guard let data = articleJSON.data(using: .utf8) else {
-            throw Error.failedToConvertToData
+        webView.configuration.userContentController.addUserScript(endScript)
+        webView.loadHTMLString(html, baseURL: baseURL)
+
+        return try await withCheckedThrowingContinuation { [weak self] continuation in
+            self?.messageHandler?.subscribeEvent { event in
+                switch event {
+                case let .contentParsed(readabilityResult):
+                    continuation.resume(returning: readabilityResult)
+                case let .availabilityChanged(availability):
+                    if availability == .unavailable {
+                        continuation.resume(throwing: Error.readerIsUnavailable)
+                    }
+                default:
+                    break
+                }
+            }
         }
-
-        return try JSONDecoder().decode(ReadabilityResult.self, from: data)
     }
 }
 
 extension ReadabilityRunner {
-    private func loadHTML(_ html: String, baseURL: URL?) async {
-        webView.loadHTMLString(html, baseURL: baseURL)
-        await navigationDelegate.waitForNavigationFinished()
-    }
-
-    private func parseWithReadability(options: Readability.Options?) async throws -> String {
-        let script = try await scriptGenerator.generateNonInteractiveScript(options: options)
-
-        guard let result = try await webView.evaluateJavaScript(script) as? String
-        else {
-            throw Error.failedToEvaluateJavaScript
+    private func generateJSONOptions(options: Readability.Options?) throws -> String {
+        if let options {
+            let data = try encoder.encode(options)
+            return String(data: data, encoding: .utf8) ?? "{}"
+        } else {
+            return "{}"
         }
-        return result
     }
 }
 
 extension ReadabilityRunner {
     enum Error: Swift.Error {
-        case failedToEvaluateJavaScript
-        case failedToConvertToData
+        case readerIsUnavailable
     }
 }
 
-private final class NavigationDelegate: NSObject, WKNavigationDelegate {
-    private var continuation: CheckedContinuation<Void, Never>?
-
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        continuation?.resume(returning: ())
-        continuation = nil
-    }
-
-    func waitForNavigationFinished() async {
-        await withCheckedContinuation { continuation in
-            self.continuation = continuation
-        }
+private struct EmptyContentGenerator: ReaderContentGeneratable {
+    func generate(_ readabilityResult: ReadabilityResult, initialStyle: ReaderStyle) async -> String? {
+        nil
     }
 }

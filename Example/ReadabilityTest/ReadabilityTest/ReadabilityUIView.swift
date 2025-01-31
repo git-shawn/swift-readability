@@ -3,20 +3,24 @@ import WebUI
 import WebKit
 import ReadabilityUI
 
-struct ReadabilityUIView: View {
+struct ReaderWebView: View {
     @State var content: String?
-    @State var configuration: WKWebViewConfiguration? = .init()
+    @State var configuration: WKWebViewConfiguration?
     @State var isLoading = false
     @State var urlString = ""
     @State var isPresented = true
+    @State var html: String?
+    @State var isReaderAvailable = false
+    @State var isReaderPresenting = false
 
-    @StateObject private var webCoordinator = ReadabilityWebCoordinator()
+    private let webCoordinator = ReadabilityWebCoordinator(initialStyle: .init(theme: .dark, fontSize: .size5))
 
     var body: some View {
         WebViewReader { proxy in
             if let configuration {
                 WebView(configuration: configuration)
-                    .uiDelegate(ReaderUIDelegate())
+                    .uiDelegate(ReadabilityUIDelegate())
+                    .navigationDelegate(NavigationDelegate())
                     .searchable(text: $urlString, isPresented: $isPresented)
                     .onSubmit(of: .search) {
                         withLoading {
@@ -25,9 +29,29 @@ struct ReadabilityUIView: View {
                             }
                         }
                     }
-                    .onReadabilityContentParsed(using: webCoordinator) { html in
-                        Task { @MainActor in
-                            proxy.loadHTMLString(html, baseURL: nil)
+                    .onReadableContentParsed(using: webCoordinator) { html in
+                        self.html = html
+                    }
+                    .onReaderAvailabilityChanged(using: webCoordinator) { availability in
+                        self.isReaderAvailable = availability == .available
+                    }
+                    .overlay(alignment: .bottomTrailing) {
+                        if let html {
+                            Button {
+                                if isReaderPresenting, let url = URL(string: urlString) {
+                                    proxy.goBack()
+                                } else {
+                                    proxy.loadHTMLString(html, baseURL: nil)
+                                }
+                                isReaderPresenting.toggle()
+                            } label: {
+                                Image(systemName: "text.page")
+                                    .padding()
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(.circle)
+                            }
+                            .symbolVariant(isReaderPresenting ? .fill : .none)
+                            .offset(x: -50, y: -50)
                         }
                     }
             } else {
@@ -42,7 +66,6 @@ struct ReadabilityUIView: View {
                 ProgressView()
             }
         }
-
     }
 
     private func withLoading(_ operation: @escaping () async throws -> Void) {
@@ -64,5 +87,14 @@ final class ReadabilityUIDelegate: NSObject, WKUIDelegate {
             webView.load(navigationAction.request)
         }
         return nil
+    }
+}
+
+@MainActor
+final class NavigationDelegate: NSObject, WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        Task {
+//            try await webView.setStyle(.init(theme: .dark, fontSize: .size1))
+        }
     }
 }

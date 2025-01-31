@@ -1,4 +1,16 @@
-<!doctype html><html><head><meta content="text/html; charset=UTF-8" http-equiv="content-type"><meta name="viewport" content="width=device-width,user-scalable=no,minimum-scale=.25,maximum-scale=1.6,initial-scale=1"><meta name="referrer" content="never"><title>%READER-TITLE%</title><style>/* This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=.25, maximum-scale=1.6, initial-scale=1.0">
+  <meta name="referrer" content="never">
+  <title>%READER-TITLE%</title>
+  <style>
+    /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -711,8 +723,21 @@ font-family: -apple-system, sans-serif;
   .toolbar > * {
     width: 56px;
   }
-}</style><script>window.addEventListener('DOMContentLoaded', function() {
-        if (window.__swift_readability__) {
-            window.__swift_readability__.configureReader();
-        }
-    });</script></head><body data-readerstyle="%READER-STYLE%" dir="%READER-DIRECTION%" lang="%READER-LANGUAGE%"><div id="reader-header" class="header"><h1 id="reader-title">%READER-TITLE%</h1><div id="reader-credits" class="credits">%READER-BYLINE%</div></div><div id="reader-content" class="content">%READER-CONTENT%</div></body></html>
+}
+
+  </style>
+</head>
+
+<body data-readerstyle='%READER-STYLE%' dir='%READER-DIRECTION%' lang='%READER-LANGUAGE%'>
+  <div id="reader-header" class="header">
+    <h1 id="reader-title">%READER-TITLE%</h1>
+    <div id="reader-credits" class="credits">%READER-BYLINE%</div>
+  </div>
+
+  <div id="reader-content" class="content">
+    %READER-CONTENT%
+  </div>
+
+</body>
+
+</html>

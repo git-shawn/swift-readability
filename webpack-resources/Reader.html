@@ -1,7 +1,7 @@
-<!DOCTYPE html>
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -12,16 +12,9 @@
   <style>
     <%= css %>
   </style>
-  <script>
-    window.addEventListener('DOMContentLoaded', function() {
-        if (window.__swift_readability__) {
-            window.__swift_readability__.configureReader();
-        }
-    });
-  </script>
 </head>
 
-<body data-readerStyle='%READER-STYLE%' dir='%READER-DIRECTION%' lang='%READER-LANGUAGE%'>
+<body data-readerstyle='%READER-STYLE%' dir='%READER-DIRECTION%' lang='%READER-LANGUAGE%'>
   <div id="reader-header" class="header">
     <h1 id="reader-title">%READER-TITLE%</h1>
     <div id="reader-credits" class="credits">%READER-BYLINE%</div>

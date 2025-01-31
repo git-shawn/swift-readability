@@ -30,8 +30,7 @@ let package = Package(
                 "ReadabilityCore"
             ],
             resources: [
-                .copy("../../node_modules/@mozilla/readability/Readability.js"),
-                .copy("../../node_modules/@mozilla/readability/Readability-readerable.js"),
+                .process("Resources")
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6)
