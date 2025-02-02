@@ -28,14 +28,14 @@ public final class ReadabilityWebCoordinator: ObservableObject {
         let documentStartScript = WKUserScript(
             source: documentStartString,
             injectionTime: .atDocumentStart,
-            forMainFrameOnly: false,
+            forMainFrameOnly: true,
             in: .defaultClient
         )
 
         let documentEndScript = WKUserScript(
             source: documentEndString,
             injectionTime: .atDocumentEnd,
-            forMainFrameOnly: false,
+            forMainFrameOnly: true,
             in: .defaultClient
         )
 
