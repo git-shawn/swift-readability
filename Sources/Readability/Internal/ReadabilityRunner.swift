@@ -19,7 +19,7 @@ final class ReadabilityRunner {
             readerContentGenerator: EmptyContentGenerator()
         )
 
-        configuration.userContentController.add(messageHandler, contentWorld: .defaultClient, name: "readabilityMessageHandler")
+        configuration.userContentController.add(messageHandler, name: "readabilityMessageHandler")
 
         self.messageHandler = messageHandler
         self.webView = WKWebView(frame: .zero, configuration: configuration)
@@ -41,8 +41,7 @@ final class ReadabilityRunner {
         let endScript = WKUserScript(
             source: script,
             injectionTime: .atDocumentEnd,
-            forMainFrameOnly: true,
-            in: .defaultClient
+            forMainFrameOnly: true
         )
 
         webView.configuration.userContentController.addUserScript(endScript)

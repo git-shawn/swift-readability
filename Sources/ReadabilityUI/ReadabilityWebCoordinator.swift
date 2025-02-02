@@ -28,15 +28,13 @@ public final class ReadabilityWebCoordinator: ObservableObject {
         let documentStartScript = WKUserScript(
             source: documentStartString,
             injectionTime: .atDocumentStart,
-            forMainFrameOnly: true,
-            in: .defaultClient
+            forMainFrameOnly: true
         )
 
         let documentEndScript = WKUserScript(
             source: documentEndString,
             injectionTime: .atDocumentEnd,
-            forMainFrameOnly: true,
-            in: .defaultClient
+            forMainFrameOnly: true
         )
 
         let configuration = WKWebViewConfiguration()
@@ -50,7 +48,7 @@ public final class ReadabilityWebCoordinator: ObservableObject {
 
         configuration.userContentController.addUserScript(documentStartScript)
         configuration.userContentController.addUserScript(documentEndScript)
-        configuration.userContentController.add(messageHandler, contentWorld: .defaultClient, name: messageHandlerName)
+        configuration.userContentController.add(messageHandler, name: messageHandlerName)
 
         messageHandler.eventHandler = { [weak self] event in
             switch event {
@@ -68,7 +66,7 @@ public final class ReadabilityWebCoordinator: ObservableObject {
 
     deinit {
         MainActor.assumeIsolated {
-            configuration?.userContentController.removeScriptMessageHandler(forName: messageHandlerName, contentWorld: .defaultClient)
+            configuration?.userContentController.removeScriptMessageHandler(forName: messageHandlerName)
             configuration?.userContentController.removeAllUserScripts()
         }
     }

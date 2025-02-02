@@ -14,8 +14,7 @@ public struct ReaderStyleSetter<Runner: WebViewJavaScriptRunnable> {
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
         try await runner.evaluate(
-            "window.__swift_readability__.setStyle(\(jsonString));0",
-            contentWorld: .defaultClient
+            "window.__swift_readability__.setStyle(\(jsonString));0"
         )
     }
 }
