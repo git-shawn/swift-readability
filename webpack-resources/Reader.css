@@ -712,3 +712,21 @@ font-family: -apple-system, sans-serif;
     width: 56px;
   }
 }
+
+.light #reader-overlay,
+.light #reader-container {
+    background-color: #ffffff;
+    color: #15141a;
+}
+
+.dark #reader-overlay,
+.dark #reader-container {
+    background-color: #333333;
+    color: #fbfbfe;
+}
+
+.sepia #reader-overlay,
+.sepia #reader-container {
+    background-color: #fff4de;
+    color: #15141a;
+}

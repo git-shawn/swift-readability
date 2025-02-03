@@ -49,7 +49,10 @@ let package = Package(
             ]
         ),
         .target(
-            name: "ReadabilityCore"
+            name: "ReadabilityCore",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
         ),
         .testTarget(
             name: "ReadabilityTests",

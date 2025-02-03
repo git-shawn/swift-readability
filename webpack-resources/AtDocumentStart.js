@@ -1,20 +1,28 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 "use strict";
 import { isProbablyReaderable, Readability } from "@mozilla/readability";
 
 const DEBUG = false;
 
-var readabilityResult = null;
-var currentStyle = null;
+let readabilityResult = null;
+let currentStyle = null;
+
+// テーマ別の色設定
+const themeColors = {
+    light: { background: "#ffffff", color: "#15141a" },
+    dark: { background: "#333333", color: "#fbfbfe" },
+    sepia: { background: "#fff4de", color: "#15141a" }
+};
 
 const BLOCK_IMAGES_SELECTOR =
-".content p > img:only-child, " +
-".content p > a:only-child > img:only-child, " +
-".content .wp-caption img, " +
-".content figure img";
+  ".content p > img:only-child, " +
+  ".content p > a:only-child > img:only-child, " +
+  ".content .wp-caption img, " +
+  ".content figure img";
 
 function debug(s) {
     if (!DEBUG) {
@@ -25,57 +33,49 @@ function debug(s) {
 
 function checkReadability() {
     setTimeout(function() {
-        if(!isProbablyReaderable(document)) {
-            postStateChangedToUnavailable()
+        if (!isProbablyReaderable(document)) {
+            postStateChangedToUnavailable();
             return;
         }
 
-        if ((document.location.protocol === "http:" || document.location.protocol === "https:") && document.location.pathname !== "/") {
-            // Short circuit in case we already ran Readability. This mostly happens when going
-            // back/forward: the page will be cached and the result will still be there.
+        if ((document.location.protocol === "http:" || document.location.protocol === "https:") &&
+            document.location.pathname !== "/") {
             if (readabilityResult && readabilityResult.content) {
                 postStateChangedToAvailable();
                 postContentParsed(readabilityResult);
                 return;
             }
 
-            var uri = {
+            const uri = {
                 spec: document.location.href,
                 host: document.location.host,
-                prePath: document.location.protocol + "//" + document.location.host, // TODO This is incomplete, needs username/password and port
+                prePath: document.location.protocol + "//" + document.location.host,
                 scheme: document.location.protocol.substr(0, document.location.protocol.indexOf(":")),
                 pathBase: document.location.protocol + "//" + document.location.host + location.pathname.substr(0, location.pathname.lastIndexOf("/") + 1)
-            }
+            };
 
-            // document.cloneNode() can cause the webview to break (bug 1128774).
-            // Serialize and then parse the document instead.
-            var docStr = new XMLSerializer().serializeToString(document);
-
-            // Do not attempt to parse DOM if this document contains a <frameset/>
-            // element. This causes the WKWebView 1content process to crash (Bug 1489543).
+            const docStr = new XMLSerializer().serializeToString(document);
             if (docStr.indexOf("<frameset ") > -1) {
                 postStateChangedToUnavailable();
                 return;
             }
 
             const DOMPurify = require('dompurify');
-            const clean = DOMPurify.sanitize(docStr, {WHOLE_DOCUMENT: true});
-            var doc = new DOMParser().parseFromString(clean, "text/html");
-            var readability = new Readability(uri, doc, { debug: DEBUG });
+            const clean = DOMPurify.sanitize(docStr, { WHOLE_DOCUMENT: true });
+            const doc = new DOMParser().parseFromString(clean, "text/html");
+            const readability = new Readability(uri, doc, { debug: DEBUG });
             readabilityResult = readability.parse();
 
             if (!readabilityResult) {
-                postStateChangedToUnavailable()
+                postStateChangedToUnavailable();
                 return;
             }
 
-            // Sanitize the title to prevent a malicious page from inserting HTML in the `<title>`.
             readabilityResult.title = escapeHTML(readabilityResult.title);
-            // Sanitize the byline to prevent a malicious page from inserting HTML in the `<byline>`.
             readabilityResult.byline = escapeHTML(readabilityResult.byline);
 
-            postStateChanged(readabilityResult !== null ? "Available" : "Unavailable")
-            postContentParsed(readabilityResult)
+            postStateChanged(readabilityResult !== null ? "Available" : "Unavailable");
+            postContentParsed(readabilityResult);
             return;
         }
 
@@ -84,130 +84,259 @@ function checkReadability() {
 }
 
 function postContentParsed(readabilityResult) {
-    webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "ContentParsed", Value: JSON.stringify(readabilityResult)});
+    webkit.messageHandlers.readabilityMessageHandler.postMessage({
+        Type: "ContentParsed",
+        Value: JSON.stringify(readabilityResult)
+    });
 }
 
 function postStateChangedToAvailable() {
-    postStateChanged("Available")
+    postStateChanged("Available");
 }
 
 function postStateChangedToUnavailable() {
-    postStateChanged("Unavailable")
+    postStateChanged("Unavailable");
 }
 
 function postStateChanged(value) {
     if (!isCurrentPageReader()) {
-        debug({Type: "StateChange", Value: value});
-        webkit.messageHandlers.readabilityMessageHandler.postMessage({Type: "StateChange", Value: value});
+        debug({ Type: "StateChange", Value: value });
+        webkit.messageHandlers.readabilityMessageHandler.postMessage({
+            Type: "StateChange",
+            Value: value
+        });
     }
 }
 
 function isCurrentPageReader() {
-    return document.getElementById("reader-content") && document.getElementById("reader-header") && document.getElementById("reader-title") && document.getElementById("reader-credits");
+    return document.getElementById("reader-content") &&
+           document.getElementById("reader-header") &&
+           document.getElementById("reader-title") &&
+           document.getElementById("reader-credits");
 }
 
-// Readerize the document. Since we did the actual readerization already in checkReadability, we
-// can simply return the results we already have.
 function readerize() {
     return readabilityResult;
 }
 
-// TODO: The following code only makes sense in about:reader context. It may be a good idea to move
-// it out of this file and into for example a Reader.js.
+function updateThemeColors() {
+    if (currentStyle && currentStyle.theme && themeColors[currentStyle.theme]) {
+        const colors = themeColors[currentStyle.theme];
+
+        const readerContainer = document.getElementById("reader-container");
+        if (readerContainer) {
+            readerContainer.style.backgroundColor = colors.background;
+            readerContainer.style.color = colors.color;
+        }
+
+        const overlay = document.getElementById("reader-overlay");
+        if (overlay) {
+            overlay.style.backgroundColor = colors.background;
+            overlay.style.color = colors.color;
+        }
+        document.body.style.backgroundColor = colors.background;
+        document.body.style.color = colors.color;
+    }
+}
 
 function setStyle(style) {
-    // Configure the theme (light, dark)
+    const readerRoot = document.getElementById("reader-container") || document.body;
     if (currentStyle && currentStyle.theme) {
-        document.body.classList.remove(currentStyle.theme);
+        readerRoot.classList.remove(currentStyle.theme);
+        document.documentElement.classList.remove(currentStyle.theme);
     }
     if (style && style.theme) {
-        document.body.classList.add(style.theme);
+        readerRoot.classList.add(style.theme);
+        document.documentElement.classList.add(style.theme);
     }
-
-    // Configure the font size (1-5)
     if (currentStyle && currentStyle.fontSize) {
-        document.body.classList.remove("font-size" + currentStyle.fontSize);
+        readerRoot.classList.remove("font-size" + currentStyle.fontSize);
     }
     if (style && style.fontSize) {
-        document.body.classList.add("font-size" + style.fontSize);
+        readerRoot.classList.add("font-size" + style.fontSize);
     }
-
-    // Remember the style
     currentStyle = style;
+    updateThemeColors();
+}
+
+function setTheme(theme) {
+    const readerRoot = document.getElementById("reader-container") || document.body;
+    if (currentStyle && currentStyle.theme) {
+        readerRoot.classList.remove(currentStyle.theme);
+        document.documentElement.classList.remove(currentStyle.theme);
+    }
+    currentStyle = currentStyle || {};
+    if (theme) {
+        readerRoot.classList.add(theme);
+        document.documentElement.classList.add(theme);
+        currentStyle.theme = theme;
+    }
+    updateThemeColors();
+}
+
+function setFontSize(fontSize) {
+    const readerRoot = document.getElementById("reader-container") || document.body;
+    if (currentStyle && currentStyle.fontSize) {
+        readerRoot.classList.remove("font-size" + currentStyle.fontSize);
+    }
+    currentStyle = currentStyle || {};
+    if (fontSize) {
+        readerRoot.classList.add("font-size" + fontSize);
+        currentStyle.fontSize = fontSize;
+    }
+    updateThemeColors();
 }
 
 function updateImageMargins() {
-    var contentElement = document.getElementById("reader-content");
+    const readerRoot = document.getElementById("reader-container") || document.body;
+    const contentElement = readerRoot.querySelector("#reader-content");
     if (!contentElement) {
         return;
     }
 
-    var windowWidth = window.innerWidth;
-    var contentWidth = contentElement.offsetWidth;
-    var maxWidthStyle = windowWidth + "px !important";
+    const windowWidth = window.innerWidth;
+    const contentWidth = contentElement.offsetWidth;
+    const maxWidthStyle = windowWidth + "px !important";
 
-    var setImageMargins = function(img) {
+    const setImageMargins = function(img) {
         if (!img._originalWidth) {
             img._originalWidth = img.offsetWidth;
         }
-
-        var imgWidth = img._originalWidth;
-
-        // If the image is taking more than half of the screen, just make
-        // it fill edge-to-edge.
+        let imgWidth = img._originalWidth;
         if (imgWidth < contentWidth && imgWidth > windowWidth * 0.55) {
             imgWidth = windowWidth;
         }
-
-        var sideMargin = Math.max((contentWidth - windowWidth) / 2, (contentWidth - imgWidth) / 2);
-
-        var imageStyle = sideMargin + "px !important";
-        var widthStyle = imgWidth + "px !important";
-
-        var cssText =
-        "max-width: " + maxWidthStyle + ";" +
-        "width: " + widthStyle + ";" +
-        "margin-left: " + imageStyle + ";" +
-        "margin-right: " + imageStyle + ";";
-
+        const sideMargin = Math.max((contentWidth - windowWidth) / 2, (contentWidth - imgWidth) / 2);
+        const imageStyle = sideMargin + "px !important";
+        const widthStyle = imgWidth + "px !important";
+        const cssText =
+            "max-width: " + maxWidthStyle + ";" +
+            "width: " + widthStyle + ";" +
+            "margin-left: " + imageStyle + ";" +
+            "margin-right: " + imageStyle + ";";
         img.style.cssText = cssText;
     };
 
-    var imgs = document.querySelectorAll(BLOCK_IMAGES_SELECTOR);
-    for (var i = imgs.length; --i >= 0;) {
-        var img = imgs[i];
+    const imgs = contentElement.querySelectorAll(BLOCK_IMAGES_SELECTOR);
+    for (let i = imgs.length; --i >= 0;) {
+        const img = imgs[i];
         if (img.width > 0) {
             setImageMargins(img);
         } else {
             img.onload = function() {
                 setImageMargins(img);
-            }
+            };
         }
     }
 }
 
 function configureReader() {
-    if (!isCurrentPageReader()) {
+    const readerRoot = document.getElementById("reader-container");
+    if (!readerRoot) {
         return;
     }
-    // Configure the reader with the initial style that was injected in the page.
-    var style = JSON.parse(document.body.getAttribute("data-readerstyle"));
+    const dataStyle = readerRoot.getAttribute("data-readerstyle");
+    if (!dataStyle) {
+        return;
+    }
+    const style = JSON.parse(dataStyle);
     setStyle(style);
-
-    // The order here is important. Because updateImageMargins depends on contentElement.offsetWidth which
-    // will not be set until contentElement is visible. If this leads to annoying content reflowing then we
-    // need to look at an alternative way to do
     updateImageMargins();
 }
 
 function escapeHTML(string) {
     if (typeof(string) !== 'string') { return ''; }
     return string
-    .replace(/\&/g, "&amp;")
-    .replace(/\</g, "&lt;")
-    .replace(/\>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/\'/g, "&#039;");
+        .replace(/\&/g, "&amp;")
+        .replace(/\</g, "&lt;")
+        .replace(/\>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/\'/g, "&#039;");
+}
+
+function showReaderOverlay(readerHTML) {
+    let originalContainer = document.getElementById('original-content');
+    if (!originalContainer) {
+        originalContainer = document.createElement('div');
+        originalContainer.id = 'original-content';
+        while (document.body.firstChild) {
+            originalContainer.appendChild(document.body.firstChild);
+        }
+        document.body.appendChild(originalContainer);
+    }
+    originalContainer.style.display = 'none';
+
+    let overlay = document.getElementById('reader-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'reader-overlay';
+        Object.assign(overlay.style, {
+            opacity: '0',
+            transition: 'opacity 0.3s ease',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            overflow: 'auto'
+        });
+        document.body.appendChild(overlay);
+    } else {
+        overlay.style.opacity = '0';
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(readerHTML, "text/html");
+
+    let styleContent = "";
+    const styleEl = doc.head.querySelector("style");
+    if (styleEl) {
+        styleContent = styleEl.outerHTML;
+        styleContent = styleContent.replace(/(^|\n)\s*body\s*\{/g, "$1#reader-container {")
+            .replace(/(^|\n)\s*html\s*\{/g, "$1#reader-container {");
+    }
+    const bodyContent = doc.body.innerHTML;
+    const dataReaderStyle = doc.body.getAttribute("data-readerstyle") || "";
+
+    const container = document.createElement("div");
+    container.id = "reader-container";
+    if (dataReaderStyle) {
+        container.setAttribute("data-readerstyle", dataReaderStyle);
+    }
+    container.innerHTML = styleContent + bodyContent;
+
+    overlay.innerHTML = "";
+    overlay.appendChild(container);
+
+    configureReader();
+
+    requestAnimationFrame(function() {
+        updateThemeColors();
+        overlay.style.opacity = "1";
+    });
+}
+
+function hideReaderOverlay() {
+    const overlay = document.getElementById('reader-overlay');
+    if (overlay) {
+        overlay.style.transition = 'opacity 0.3s ease';
+        overlay.style.opacity = '0';
+        overlay.addEventListener("transitionend", function(e) {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, { once: true });
+    }
+    const originalContainer = document.getElementById('original-content');
+    if (originalContainer) {
+        originalContainer.style.display = '';
+    }
+    if (currentStyle && currentStyle.theme) {
+        document.documentElement.classList.remove(currentStyle.theme);
+    }
+}
+
+function isReaderMode() {
+    return isCurrentPageReader();
 }
 
 Object.defineProperty(window, "__swift_readability__", {
@@ -216,9 +345,13 @@ Object.defineProperty(window, "__swift_readability__", {
     writable: false,
     value: Object.freeze({
         checkReadability: checkReadability,
-        readerize: readerize,
         setStyle: setStyle,
-        configureReader: configureReader
+        setTheme: setTheme,
+        setFontSize: setFontSize,
+        configureReader: configureReader,
+        showReaderOverlay: showReaderOverlay,
+        hideReaderOverlay: hideReaderOverlay,
+        isReaderMode: isReaderMode
     })
 });
 

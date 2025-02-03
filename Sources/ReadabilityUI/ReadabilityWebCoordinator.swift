@@ -83,7 +83,7 @@ public final class ReadabilityWebCoordinator: ObservableObject {
 public extension View {
     func onReadableContentParsed(
         using coordinator: ReadabilityWebCoordinator,
-        perform action: @MainActor @Sendable @escaping (_ html: String) -> Void
+        perform action: @MainActor @escaping (_ html: String) -> Void
     ) -> some View {
         onAppear {
             coordinator.contentParsed { html in
@@ -96,7 +96,7 @@ public extension View {
 
     func onReaderAvailabilityChanged(
         using coordinator: ReadabilityWebCoordinator,
-        perform action: @MainActor @Sendable @escaping (_ availability: ReaderAvailability) -> Void
+        perform action: @MainActor @escaping (_ availability: ReaderAvailability) -> Void
     ) -> some View {
         onAppear {
             coordinator.availabilityChanged { availability in

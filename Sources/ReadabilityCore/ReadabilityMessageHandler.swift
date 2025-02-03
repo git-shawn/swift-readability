@@ -17,7 +17,7 @@ package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratabl
     private let readerContentGenerator: Generator
     private let mode: Mode
 
-    package var eventHandler: (@MainActor @Sendable (Event) -> Void)?
+    package var eventHandler: (@MainActor (Event) -> Void)?
 
     package init(mode: Mode, readerContentGenerator: Generator) {
         self.mode = mode
@@ -57,7 +57,7 @@ package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratabl
         }
     }
 
-    package func subscribeEvent(_ operation: (@MainActor @Sendable (Event) -> Void)?) {
+    package func subscribeEvent(_ operation: (@MainActor (Event) -> Void)?) {
         eventHandler = operation
     }
 }
