@@ -148,6 +148,8 @@ Before building the Swift Package, please complete the following steps:
 1. Verify that npm is installed.
 2. Then, run `make bootstrap`.
 
+<br>If you modify the source code in the webpack-resources folder, please run `npm run build`
+
 ## Credits
 This project leverages several open source projects:
 
