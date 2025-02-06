@@ -6,8 +6,10 @@
 "use strict";
 import { isProbablyReaderable, Readability } from "@mozilla/readability";
 
+// Debug flag to control logging.
 const DEBUG = false;
 
+// Variables to hold the readability result, current style, and original body style.
 let readabilityResult = null;
 let currentStyle = null;
 let originalBodyStyle = null;
@@ -18,12 +20,17 @@ const themeColors = {
     sepia: { background: "#fff4de", color: "#15141a" }
 };
 
+// Selector for block-level images in the content.
 const BLOCK_IMAGES_SELECTOR =
   ".content p > img:only-child, " +
   ".content p > a:only-child > img:only-child, " +
   ".content .wp-caption img, " +
   ".content figure img";
 
+/**
+ * Logs debug information if DEBUG is enabled.
+ * @param {*} s - The message or object to log.
+ */
 function debug(s) {
     if (!DEBUG) {
         return;
@@ -31,6 +38,9 @@ function debug(s) {
     console.log(s);
 }
 
+/**
+ * Checks if the current document is readerable and initiates parsing if so.
+ */
 function checkReadability() {
     setTimeout(function() {
         if (!isProbablyReaderable(document)) {
@@ -40,6 +50,7 @@ function checkReadability() {
 
         if ((document.location.protocol === "http:" || document.location.protocol === "https:") &&
             document.location.pathname !== "/") {
+            // If a previous readability result exists, reuse it.
             if (readabilityResult && readabilityResult.content) {
                 postStateChangedToAvailable();
                 postContentParsed(readabilityResult);
@@ -83,6 +94,10 @@ function checkReadability() {
     }, 100);
 }
 
+/**
+ * Posts the parsed readability content to the native app.
+ * @param {Object} readabilityResult - The result object from Readability.
+ */
 function postContentParsed(readabilityResult) {
     webkit.messageHandlers.readabilityMessageHandler.postMessage({
         Type: "ContentParsed",
@@ -90,14 +105,24 @@ function postContentParsed(readabilityResult) {
     });
 }
 
+/**
+ * Posts a state change message indicating the reader is available.
+ */
 function postStateChangedToAvailable() {
     postStateChanged("Available");
 }
 
+/**
+ * Posts a state change message indicating the reader is unavailable.
+ */
 function postStateChangedToUnavailable() {
     postStateChanged("Unavailable");
 }
 
+/**
+ * Sends a state change message to the native app if the page is not already in reader mode.
+ * @param {string} value - The state value ("Available" or "Unavailable").
+ */
 function postStateChanged(value) {
     if (!isCurrentPageReader()) {
         debug({ Type: "StateChange", Value: value });
@@ -108,6 +133,10 @@ function postStateChanged(value) {
     }
 }
 
+/**
+ * Checks if the current page is already in reader mode.
+ * @returns {boolean} True if the necessary reader elements are present, otherwise false.
+ */
 function isCurrentPageReader() {
     return document.getElementById("reader-content") &&
            document.getElementById("reader-header") &&
@@ -115,10 +144,9 @@ function isCurrentPageReader() {
            document.getElementById("reader-credits");
 }
 
-function readerize() {
-    return readabilityResult;
-}
-
+/**
+ * Updates the theme colors of the reader view based on the current style.
+ */
 function updateThemeColors() {
     if (currentStyle && currentStyle.theme && themeColors[currentStyle.theme]) {
         const colors = themeColors[currentStyle.theme];
@@ -134,12 +162,16 @@ function updateThemeColors() {
             overlay.style.backgroundColor = colors.background;
             overlay.style.color = colors.color;
         }
-        
+
         document.body.style.backgroundColor = colors.background;
         document.body.style.color = colors.color;
     }
 }
 
+/**
+ * Applies the provided style to the reader view.
+ * @param {Object} style - An object containing theme and fontSize properties.
+ */
 function setStyle(style) {
     const readerRoot = document.getElementById("reader-container") || document.body;
     if (currentStyle && currentStyle.theme) {
@@ -160,6 +192,10 @@ function setStyle(style) {
     updateThemeColors();
 }
 
+/**
+ * Sets the theme for the reader view.
+ * @param {string} theme - The theme to apply (e.g., "light", "dark", "sepia").
+ */
 function setTheme(theme) {
     const readerRoot = document.getElementById("reader-container") || document.body;
     if (currentStyle && currentStyle.theme) {
@@ -175,6 +211,10 @@ function setTheme(theme) {
     updateThemeColors();
 }
 
+/**
+ * Sets the font size for the reader view.
+ * @param {number} fontSize - The font size value to apply.
+ */
 function setFontSize(fontSize) {
     const readerRoot = document.getElementById("reader-container") || document.body;
     if (currentStyle && currentStyle.fontSize) {
@@ -188,6 +228,9 @@ function setFontSize(fontSize) {
     updateThemeColors();
 }
 
+/**
+ * Updates margins for images within the reader content to ensure proper layout.
+ */
 function updateImageMargins() {
     const readerRoot = document.getElementById("reader-container") || document.body;
     const contentElement = readerRoot.querySelector("#reader-content");
@@ -231,6 +274,9 @@ function updateImageMargins() {
     }
 }
 
+/**
+ * Configures the reader view by applying the style and updating image margins.
+ */
 function configureReader() {
     const readerRoot = document.getElementById("reader-container");
     if (!readerRoot) {
@@ -245,6 +291,11 @@ function configureReader() {
     updateImageMargins();
 }
 
+/**
+ * Escapes special HTML characters in a string.
+ * @param {string} string - The string to escape.
+ * @returns {string} The escaped string.
+ */
 function escapeHTML(string) {
     if (typeof(string) !== 'string') { return ''; }
     return string
@@ -255,6 +306,11 @@ function escapeHTML(string) {
         .replace(/\'/g, "&#039;");
 }
 
+/**
+ * Displays the reader overlay with the provided HTML content.
+ * Hides the original content and applies necessary styles.
+ * @param {string} readerHTML - The HTML content to display in the reader overlay.
+ */
 function showReaderOverlay(readerHTML) {
     if (originalBodyStyle === null) {
         originalBodyStyle = document.body.getAttribute("style");
@@ -320,6 +376,9 @@ function showReaderOverlay(readerHTML) {
     });
 }
 
+/**
+ * Hides the reader overlay and restores the original page content.
+ */
 function hideReaderOverlay() {
     const overlay = document.getElementById('reader-overlay');
     if (overlay) {
@@ -347,10 +406,15 @@ function hideReaderOverlay() {
     }
 }
 
+/**
+ * Checks if the current page is in reader mode.
+ * @returns {boolean} True if in reader mode, false otherwise.
+ */
 function isReaderMode() {
     return isCurrentPageReader();
 }
 
+// Expose the Readability functions to the global namespace for Swift integration.
 Object.defineProperty(window, "__swift_readability__", {
     enumerable: false,
     configurable: false,
@@ -367,6 +431,7 @@ Object.defineProperty(window, "__swift_readability__", {
     })
 });
 
+// Configure the reader view on window load.
 window.addEventListener("load", function(event) {
     configureReader();
 });
