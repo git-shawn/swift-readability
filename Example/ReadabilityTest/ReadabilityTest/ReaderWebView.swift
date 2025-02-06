@@ -1,8 +1,8 @@
-import SwiftUI
-import WebUI
-import WebKit
-import ReadabilityUI
 import Observation
+import ReadabilityUI
+import SwiftUI
+import WebKit
+import WebUI
 
 @Observable
 @MainActor
@@ -164,7 +164,7 @@ struct ReaderWebView: View {
 }
 
 final class ReadabilityUIDelegate: NSObject, WKUIDelegate {
-    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+    func webView(_ webView: WKWebView, createWebViewWith _: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures _: WKWindowFeatures) -> WKWebView? {
         if navigationAction.targetFrame == nil {
             webView.load(navigationAction.request)
         }
@@ -179,7 +179,7 @@ final class NavigationDelegate: NSObject, WKNavigationDelegate {
         self.didFinish = didFinish
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func webView(_: WKWebView, didFinish _: WKNavigation!) {
         didFinish()
     }
 }

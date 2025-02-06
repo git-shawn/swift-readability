@@ -1,13 +1,13 @@
 import Foundation
 
-extension Readability {
+public extension Readability {
     /// Options for configuring Mozilla Readability.
     ///
     /// Corresponds to the `options` object in:
     /// ```
     /// new Readability(document, options)
     /// ```
-    public struct Options: Encodable, Sendable {
+    struct Options: Encodable, Sendable {
         /// Whether to enable debugging/logging.
         /// - Default: `false`
         public var debug: Bool

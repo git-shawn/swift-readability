@@ -1,6 +1,6 @@
+import ReadabilityCore
 import SwiftUI
 import WebKit
-import ReadabilityCore
 
 /// A runner class responsible for processing HTML content and producing a `ReadabilityResult`.
 /// This class uses a WKWebView to load HTML and execute JavaScript for parsing.
@@ -25,7 +25,7 @@ final class ReadabilityRunner {
         configuration.userContentController.add(messageHandler, name: "readabilityMessageHandler")
 
         self.messageHandler = messageHandler
-        self.webView = WKWebView(frame: .zero, configuration: configuration)
+        webView = WKWebView(frame: .zero, configuration: configuration)
     }
 
     func parseHTML(
@@ -38,7 +38,7 @@ final class ReadabilityRunner {
             .load(shouldSanitize ? .readabilitySanitized : .readabilityBasic)
             .replacingOccurrences(
                 of: "__READABILITY_OPTION__",
-                with: try generateJSONOptions(options: options)
+                with: generateJSONOptions(options: options)
             )
 
         let endScript = WKUserScript(
@@ -90,7 +90,7 @@ extension ReadabilityRunner {
 
 /// A placeholder content generator that conforms to `ReaderContentGeneratable` and does not generate any content.
 private struct EmptyContentGenerator: ReaderContentGeneratable {
-    func generate(_ readabilityResult: ReadabilityResult, initialStyle: ReaderStyle) async -> String? {
+    func generate(_: ReadabilityResult, initialStyle _: ReaderStyle) async -> String? {
         nil
     }
 }

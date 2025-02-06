@@ -1,7 +1,7 @@
-import SwiftUI
 import Readability
-import WebUI
+import SwiftUI
 import WebKit
+import WebUI
 
 struct ContentView: View {
     var body: some View {

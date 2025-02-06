@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 #if canImport(UIKit)
-import UIKit
+    import UIKit
 #elseif canImport(AppKit)
-import AppKit
+    import AppKit
 #endif
-
 
 /// A structure representing the style settings for the reader mode.
 public struct ReaderStyle: Sendable, Codable, Hashable {
@@ -71,7 +70,7 @@ public struct ReaderStyle: Sendable, Codable, Hashable {
             if isSmallest {
                 return self
             } else {
-                return FontSize(rawValue: self.rawValue - 1)!
+                return FontSize(rawValue: rawValue - 1)!
             }
         }
 
@@ -80,33 +79,33 @@ public struct ReaderStyle: Sendable, Codable, Hashable {
             if isLargest {
                 return self
             } else {
-                return FontSize(rawValue: self.rawValue + 1)!
+                return FontSize(rawValue: rawValue + 1)!
             }
         }
 
         /// The default font size based on the user's preferred content size category.
         #if canImport(UIKit)
-        @MainActor
-        static var defaultSize: FontSize {
-            switch UIApplication.shared.preferredContentSizeCategory {
-            case .extraSmall:
-                .size1
-            case .small:
-                .size2
-            case .medium:
-                .size3
-            case .large:
-                .size5
-            case .extraLarge:
-                .size7
-            case .extraExtraLarge:
-                .size9
-            case .extraExtraExtraLarge:
-                .size12
-            default:
-                .size5
+            @MainActor
+            static var defaultSize: FontSize {
+                switch UIApplication.shared.preferredContentSizeCategory {
+                case .extraSmall:
+                    .size1
+                case .small:
+                    .size2
+                case .medium:
+                    .size3
+                case .large:
+                    .size5
+                case .extraLarge:
+                    .size7
+                case .extraExtraLarge:
+                    .size9
+                case .extraExtraExtraLarge:
+                    .size12
+                default:
+                    .size5
+                }
             }
-        }
         #endif
     }
 }

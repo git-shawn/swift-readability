@@ -34,7 +34,7 @@ package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratabl
         self.readerContentGenerator = readerContentGenerator
     }
 
-    package func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    package func userContentController(_: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let message = message.body as? [String: Any],
               let typeString = message["Type"] as? String,
               let type = ReadabilityMessageType(rawValue: typeString),
@@ -55,7 +55,7 @@ package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratabl
                    let result = try? JSONDecoder().decode(ReadabilityResult.self, from: jsonData)
                 {
                     switch mode {
-                    case .generateReaderHTML(let initialStyle):
+                    case let .generateReaderHTML(initialStyle):
                         if let html = await self?.readerContentGenerator.generate(result, initialStyle: initialStyle) {
                             await self?.eventHandler?(.contentParsedAndGeneratedHTML(html: html))
                         }

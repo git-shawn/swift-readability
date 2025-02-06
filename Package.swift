@@ -8,7 +8,7 @@ let package = Package(
     platforms: [
         .macOS(.v11),
         .iOS(.v14),
-        .visionOS(.v1)
+        .visionOS(.v1),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -27,31 +27,31 @@ let package = Package(
         .target(
             name: "Readability",
             dependencies: [
-                "ReadabilityCore"
+                "ReadabilityCore",
             ],
             resources: [
-                .process("Resources")
+                .process("Resources"),
             ],
             swiftSettings: [
-                .swiftLanguageMode(.v6)
+                .swiftLanguageMode(.v6),
             ]
         ),
         .target(
             name: "ReadabilityUI",
             dependencies: [
-                "ReadabilityCore"
+                "ReadabilityCore",
             ],
             resources: [
-                .process("Resources")
+                .process("Resources"),
             ],
             swiftSettings: [
-                .swiftLanguageMode(.v6)
+                .swiftLanguageMode(.v6),
             ]
         ),
         .target(
             name: "ReadabilityCore",
             swiftSettings: [
-                .swiftLanguageMode(.v6)
+                .swiftLanguageMode(.v6),
             ]
         ),
         .testTarget(

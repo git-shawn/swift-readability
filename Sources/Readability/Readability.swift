@@ -1,6 +1,6 @@
+import ReadabilityCore
 import SwiftUI
 import WebKit
-import ReadabilityCore
 
 /// A public interface for parsing web pages using Mozilla's Readability library.
 /// This struct provides asynchronous methods to parse HTML or a URL into a structured `ReadabilityResult`.

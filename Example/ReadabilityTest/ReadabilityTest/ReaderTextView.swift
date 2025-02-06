@@ -1,5 +1,5 @@
-import SwiftUI
 import Readability
+import SwiftUI
 
 struct ReaderTextView: View {
     @State var content: String = ""

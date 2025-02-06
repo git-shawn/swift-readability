@@ -1,6 +1,6 @@
+import ReadabilityCore
 import SwiftUI
 import WebKit
-import ReadabilityCore
 
 /// A coordinator that manages a WKWebView configured for reader mode.
 /// It sets up the necessary scripts and message handlers to parse content and manage reader mode availability.
@@ -74,9 +74,9 @@ public final class ReadabilityWebCoordinator: ObservableObject {
 
         messageHandler.subscribeEvent { [weak self] event in
             switch event {
-            case .availabilityChanged(let availability):
+            case let .availabilityChanged(availability):
                 self?.availabilityChangedContinuation.yield(availability)
-            case .contentParsedAndGeneratedHTML(html: let html):
+            case let .contentParsedAndGeneratedHTML(html: html):
                 self?.contentParsedContinuation.yield(html)
             case .contentParsed:
                 break
