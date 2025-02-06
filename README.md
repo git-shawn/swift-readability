@@ -137,3 +137,13 @@ This project leverages several open source projects:
 - [mozilla-mobile/firefox-ios](https://github.com/mozilla-mobile/firefox-ios) for inspiration on Reader Mode functionality (licensed under the MPL 2.0).
 - [Cybozu/WebUI](https://github.com/Cybozu/WebUI) for the SwiftUI integration example (licensed under the MIT License).
 - [cure53/DOMPurify](https://github.com/cure53/DOMPurify) for sanitizing HTML content (licensed under the MIT License).
+
+In addition, the following files are distributed under the Mozilla Public License, Version 2.0 (MPL 2.0):
+- [webpack-resources/AtDocumentStart.js](./webpack-resources/AtDocumentStart.js)
+- [webpack-resources/ReadabilitySanitized.js](./webpack-resources/ReadabilitySanitized.js)
+- [webpack-resources/Reader.html](./webpack-resources/Reader.html)
+- [webpack-resources/Reader.css](./webpack-resources/Reader.css)
+- [Sources/ReadabilityUI/AtDocumentStart.js](./Sources/ReadabilityUI/AtDocumentStart.js)
+- [Sources/ReadabilityUI/Reader.html](./Sources/ReadabilityUI/Reader.html)
+- [Sources/ReadabilityUI/ReadabilitySanitized.js](./Sources/ReadabilityUI/ReadabilitySanitized.js)
+- [Sources/ReadabilityCore/ReaderStyle.swift](./Sources/ReadabilityCore/ReaderStyle.swift)
