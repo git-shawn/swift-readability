@@ -104,6 +104,21 @@ extension WebViewProxy: @retroactive ReaderControllable {
     }
 }
 ```
+By conforming WebViewProxy to ReaderControllable, you can control the reader from the proxy, for example:
+```swift
+WebViewReader { proxy in
+    WebView(configuration: configuration)
+        .task {
+            for await html in coordinator.contentParsed {
+                if let url = proxy.url {
+                    try? await proxy.showReaderContent(with: html)
+                    try? await proxy.set(theme: .dark)
+                    try? await proxy.set(fontSize: .size8)
+                }
+            }
+        }
+}
+```
 
 ## Example (Integrating with SwiftUI)
 For a more detailed implementation of integrating swift-readability with SwiftUI using [Cybozu/WebUI](https://github.com/cybozu/WebUI), please refer to the [Example](./Example) provided in this repository.
