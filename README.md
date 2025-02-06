@@ -131,4 +131,9 @@ WebViewReader { proxy in
 For a more detailed implementation of integrating swift-readability with SwiftUI using [Cybozu/WebUI](https://github.com/cybozu/WebUI), please refer to the [Example](./Example) provided in this repository.
 
 ## Credits
-This library uses [mozilla/readability](https://github.com/mozilla/readability) for parsing and cleaning web content.
+This project leverages several open source projects:
+
+- [@mozilla/readability](https://github.com/mozilla/readability) for parsing web pages and generating reader-friendly content (licensed under the MIT License).
+- [mozilla-mobile/firefox-ios](https://github.com/mozilla-mobile/firefox-ios) for inspiration on Reader Mode functionality (licensed under the MPL 2.0).
+- [Cybozu/WebUI](https://github.com/Cybozu/WebUI) for the SwiftUI integration example (licensed under the MIT License).
+- [cure53/DOMPurify](https://github.com/cure53/DOMPurify) for sanitizing HTML content (licensed under the MIT License).
