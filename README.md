@@ -59,7 +59,7 @@ let result = try await readability.parse(html: html)
 ```
 
 ### Implementing Reader Mode with WKWebView
-swift-readability provides a new version of ReadabilityWebCoordinator that prepares a WKWebView configuration, and exposes two asynchronous streams: contentParsed (emitting generated reader HTML) and availabilityChanged (emitting reader mode availability updates). This configuration enables your WKWebView to detect when a web page is suitable for reader mode, generate a reader-friendly HTML overlay, and toggle reader mode dynamically.
+swift-readability provides `ReadabilityWebCoordinator` that prepares a `WKWebView` configuration, and exposes two asynchronous streams: `contentParsed` (emitting generated reader HTML) and `availabilityChanged` (emitting reader mode availability updates). This configuration enables your `WKWebView` to detect when a web page is suitable for reader mode, generate a reader-friendly HTML overlay, and toggle reader mode dynamically.
 
 ```swift
 import ReadabilityUI
@@ -124,7 +124,7 @@ extension WebViewProxy: @retroactive ReaderControllable {
     }
 }
 ```
-By conforming WebViewProxy to ReaderControllable, you can control the reader from the proxy, for example:
+By conforming `WebViewProxy` to `ReaderControllable`, you can control the reader from the proxy, for example:
 ```swift
 WebViewReader { proxy in
     WebView(configuration: configuration)
@@ -142,6 +142,11 @@ WebViewReader { proxy in
 
 ## Example (Integrating with SwiftUI)
 For a more detailed implementation of integrating swift-readability with SwiftUI using [Cybozu/WebUI](https://github.com/cybozu/WebUI), please refer to the [Example](./Example) provided in this repository.
+
+## Build
+Before building the Swift Package, please complete the following steps:
+1. Verify that npm is installed.
+2. Then, run `make bootstrap`.
 
 ## Credits
 This project leverages several open source projects:
