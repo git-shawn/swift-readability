@@ -10,8 +10,8 @@ const DEBUG = false;
 
 let readabilityResult = null;
 let currentStyle = null;
+let originalBodyStyle = null;
 
-// テーマ別の色設定
 const themeColors = {
     light: { background: "#ffffff", color: "#15141a" },
     dark: { background: "#333333", color: "#fbfbfe" },
@@ -134,6 +134,7 @@ function updateThemeColors() {
             overlay.style.backgroundColor = colors.background;
             overlay.style.color = colors.color;
         }
+        
         document.body.style.backgroundColor = colors.background;
         document.body.style.color = colors.color;
     }
@@ -255,6 +256,10 @@ function escapeHTML(string) {
 }
 
 function showReaderOverlay(readerHTML) {
+    if (originalBodyStyle === null) {
+        originalBodyStyle = document.body.getAttribute("style");
+    }
+
     let originalContainer = document.getElementById('original-content');
     if (!originalContainer) {
         originalContainer = document.createElement('div');
@@ -333,6 +338,12 @@ function hideReaderOverlay() {
     }
     if (currentStyle && currentStyle.theme) {
         document.documentElement.classList.remove(currentStyle.theme);
+    }
+    if (originalBodyStyle !== null) {
+        document.body.setAttribute("style", originalBodyStyle);
+        originalBodyStyle = null;
+    } else {
+        document.body.removeAttribute("style");
     }
 }
 

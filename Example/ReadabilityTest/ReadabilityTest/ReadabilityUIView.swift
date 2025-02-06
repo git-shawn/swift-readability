@@ -176,6 +176,7 @@ final class NavigationDelegate: NSObject, WKNavigationDelegate {
 
 extension WebViewProxy: @retroactive ReaderControllable {
     public func evaluateJavaScript(_ javascriptString: String) async throws -> Any {
-        try await evaluateJavaScript(javascriptString)
+        let result: Any? = try await evaluateJavaScript(javascriptString)
+        return result ?? ()
     }
 }
