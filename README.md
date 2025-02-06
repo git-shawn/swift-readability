@@ -92,5 +92,21 @@ try await webView.hideReaderContent()
 let isReaderMode = try await webView.isReaderMode()
 ```
 
+If you are using a SwiftUI wrapper library for WKWebView (such as Cybozu/WebUI) that does not expose the WKWebView instance, you can conform any object that has an evaluateJavaScript method to ReaderControllable. For example:
+```swift
+import WebUI
+import ReadabilityUI
+
+extension WebViewProxy: @retroactive ReaderControllable {
+    public func evaluateJavaScript(_ javascriptString: String) async throws -> Any {
+        let result: Any? = try await evaluateJavaScript(javascriptString)
+        return result ?? ()
+    }
+}
+```
+
+### Integrating with SwiftUI
+Below is a simplified example of integrating reader mode into a SwiftUI view using a custom WKWebView wrapper. You can adapt it as needed for your own wrapper or library:
+
 ## Credits
 This library uses [mozilla/readability](https://github.com/mozilla/readability) for parsing and cleaning web content.
