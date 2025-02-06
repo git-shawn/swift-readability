@@ -1,22 +1,32 @@
 import Foundation
 import WebKit
 
+/// A message handler for receiving messages from injected JavaScript in the WKWebView.
 @MainActor
 package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratable>: NSObject, WKScriptMessageHandler {
+    /// Modes that determine how the message handler processes content.
     package enum Mode {
+        /// Generates reader HTML using the provided initial style.
         case generateReaderHTML(initialStyle: ReaderStyle)
+        /// Returns the raw readability result.
         case generateReadabilityResult
     }
 
+    /// Events emitted by the message handler.
     package enum Event {
+        /// The readability content was parsed and reader HTML was generated.
         case contentParsedAndGeneratedHTML(html: String)
+        /// The readability content was parsed.
         case contentParsed(readabilityResult: ReadabilityResult)
+        /// The availability status of the reader changed.
         case availabilityChanged(availability: ReaderAvailability)
     }
 
+    // The generator used to produce reader HTML from the readability result.
     private let readerContentGenerator: Generator
     private let mode: Mode
 
+    /// A closure that is called when an event is received.
     package var eventHandler: (@MainActor (Event) -> Void)?
 
     package init(mode: Mode, readerContentGenerator: Generator) {
@@ -57,6 +67,9 @@ package final class ReadabilityMessageHandler<Generator: ReaderContentGeneratabl
         }
     }
 
+    /// Subscribes to events emitted by the message handler.
+    ///
+    /// - Parameter operation: A closure to be invoked when an event occurs, or `nil` to unsubscribe.
     package func subscribeEvent(_ operation: (@MainActor (Event) -> Void)?) {
         eventHandler = operation
     }

@@ -2,15 +2,18 @@ import SwiftUI
 import WebKit
 import ReadabilityCore
 
+/// A runner class responsible for processing HTML content and producing a `ReadabilityResult`.
+/// This class uses a WKWebView to load HTML and execute JavaScript for parsing.
 @MainActor
 final class ReadabilityRunner {
     private let webView: WKWebView
 
+    // The message handler that listens for events from the injected JavaScript.
     private weak var messageHandler: ReadabilityMessageHandler<EmptyContentGenerator>?
+    // The script loader for fetching JavaScript resources from the bundle.
     private let scriptLoader = ScriptLoader(bundle: .module)
-    private let encoder = JSONEncoder()
 
-    private var transaction = false
+    private let encoder = JSONEncoder()
 
     init() {
         let configuration = WKWebViewConfiguration()
@@ -68,7 +71,7 @@ final class ReadabilityRunner {
 
 extension ReadabilityRunner {
     private func generateJSONOptions(options: Readability.Options?) throws -> String {
-        if let options {
+        if let options = options {
             let data = try encoder.encode(options)
             return String(data: data, encoding: .utf8) ?? "{}"
         } else {
@@ -78,11 +81,14 @@ extension ReadabilityRunner {
 }
 
 extension ReadabilityRunner {
+    /// Errors that can occur during HTML parsing.
     enum Error: Swift.Error {
+        /// Indicates that the reader became unavailable during parsing.
         case readerIsUnavailable
     }
 }
 
+/// A placeholder content generator that conforms to `ReaderContentGeneratable` and does not generate any content.
 private struct EmptyContentGenerator: ReaderContentGeneratable {
     func generate(_ readabilityResult: ReadabilityResult, initialStyle: ReaderStyle) async -> String? {
         nil

@@ -64,8 +64,6 @@ extension Readability {
         /// - Default: `false`
         public var shouldSanitize: Bool
 
-        // MARK: - Initializers
-
         public init(
             debug: Bool = false,
             maxElemsToParse: Int = 0,
