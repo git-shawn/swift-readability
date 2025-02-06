@@ -92,7 +92,7 @@ try await webView.hideReaderContent()
 let isReaderMode = try await webView.isReaderMode()
 ```
 
-If you are using a SwiftUI wrapper library for WKWebView (such as Cybozu/WebUI) that does not expose the WKWebView instance, you can conform any object that has an evaluateJavaScript method to ReaderControllable. For example:
+If you are using a SwiftUI wrapper library for WKWebView (such as [Cybozu/WebUI](https://github.com/cybozu/WebUI)) that does not expose the WKWebView instance, you can conform any object that has an evaluateJavaScript method to ReaderControllable. For example:
 ```swift
 import WebUI
 import ReadabilityUI
@@ -107,6 +107,39 @@ extension WebViewProxy: @retroactive ReaderControllable {
 
 ### Integrating with SwiftUI
 Below is a simplified example of integrating reader mode into a SwiftUI view using a custom WKWebView wrapper. You can adapt it as needed for your own wrapper or library:
+```swift
+import SwiftUI
+import WebKit
+import ReadabilityUI
+
+struct ReaderWebView: View {
+    private var coordinator = ReadabilityWebCoordinator(
+        initialStyle: .init(theme: .dark, fontSize: .size5)
+    )
+    @State private var configuration: WKWebViewConfiguration?
+
+    var body: some View {
+        if let config = configuration {
+            YourWebViewWrapper(configuration: config)
+                .onReaderAvailabilityChanged(using: coordinator) { availability in
+                    // Update UI based on reader mode availability.
+                }
+                .onReadableContentParsed(using: coordinator) { html in
+                    // Handle the generated HTML (e.g., show reader overlay).
+                }
+        } else {
+            ProgressView()
+                .task {
+                    // Create a configuration that injects scripts for reader mode.
+                    configuration = try? await coordinator.createReadableWebViewConfiguration()
+                }
+        }
+    }
+}
+```
+
+## Example
+For a more detailed implementation of integrating swift-readability with SwiftUI using [Cybozu/WebUI](https://github.com/cybozu/WebUI), please refer to the [Example](./Example) provided in this repository.
 
 ## Credits
 This library uses [mozilla/readability](https://github.com/mozilla/readability) for parsing and cleaning web content.
