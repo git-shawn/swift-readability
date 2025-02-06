@@ -42,13 +42,11 @@ public final class ReadabilityWebCoordinator: ObservableObject {
     /// - Returns: A configured `WKWebViewConfiguration` with injected scripts and message handlers.
     /// - Throws: An error if script loading fails.
     public func createReadableWebViewConfiguration() async throws -> WKWebViewConfiguration {
-        // Load scripts for document start and document end asynchronously.
         async let documentStartStringTask = scriptLoader.load(.atDocumentStart)
         async let documentEndStringTask = scriptLoader.load(.atDocumentEnd)
 
         let (documentStartString, documentEndString) = try await (documentStartStringTask, documentEndStringTask)
 
-        // Create user scripts for injection.
         let documentStartScript = WKUserScript(
             source: documentStartString,
             injectionTime: .atDocumentStart,
@@ -74,7 +72,7 @@ public final class ReadabilityWebCoordinator: ObservableObject {
         configuration.userContentController.addUserScript(documentEndScript)
         configuration.userContentController.add(messageHandler, name: messageHandlerName)
 
-        messageHandler.eventHandler = { [weak self] event in
+        messageHandler.subscribeEvent { [weak self] event in
             switch event {
             case .availabilityChanged(let availability):
                 self?.availabilityChangedContinuation.yield(availability)
