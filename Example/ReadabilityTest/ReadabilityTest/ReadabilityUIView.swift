@@ -2,24 +2,30 @@ import SwiftUI
 import WebUI
 import WebKit
 import ReadabilityUI
+import Observation
+
+@Observable
+@MainActor
+final class ReaderWebModel {
+    var configuration: WKWebViewConfiguration?
+    var isLoading = false
+    var urlString = ""
+    var isPresented = true
+    var readerHTMLCaches: [URL: String] = [:]
+    var isReaderAvailable = false
+    var isReaderPresenting = false
+
+    let webCoordinator = ReadabilityWebCoordinator(initialStyle: .init(theme: .dark, fontSize: .size5))
+}
 
 struct ReaderWebView: View {
-    @State var content: String?
-    @State var configuration: WKWebViewConfiguration?
-    @State var isLoading = false
-    @State var urlString = ""
-    @State var isPresented = true
-    @State var readerHTMLCaches: [URL: String] = [:]
-    @State var isReaderAvailable = false
-    @State var isReaderPresenting = false
-
-    private let webCoordinator = ReadabilityWebCoordinator(initialStyle: .init(theme: .dark, fontSize: .size5))
+    @Bindable var model = ReaderWebModel()
 
     var body: some View {
         WebViewReader { proxy in
             let readerController = ReaderController(runner: JSRunner(proxy: proxy))
 
-            if let configuration {
+            if let configuration = model.configuration {
                 VStack(spacing: 0) {
                     ProgressView(value: proxy.estimatedProgress, total: 1)
                         .progressViewStyle(.linear)
@@ -28,26 +34,24 @@ struct ReaderWebView: View {
                         .navigationDelegate(
                             NavigationDelegate {
                                 Task { @MainActor in
-                                    isReaderPresenting = try await readerController.isReaderMode()
+                                    model.isReaderPresenting = try await readerController.isReaderMode()
                                 }
                             }
                         )
                         .ignoresSafeArea(edges: .bottom)
-                        .searchable(text: $urlString, isPresented: $isPresented)
+                        .searchable(text: $model.urlString, isPresented: $model.isPresented)
                         .onSubmit(of: .search) {
-                            withLoading {
-                                if let url = URL(string: urlString) {
-                                    proxy.load(request: URLRequest(url: url))
-                                }
+                            if let url = URL(string: model.urlString) {
+                                proxy.load(request: URLRequest(url: url))
                             }
                         }
-                        .onReadableContentParsed(using: webCoordinator) { html in
+                        .onReadableContentParsed(using: model.webCoordinator) { html in
                             if let url = proxy.url {
-                                readerHTMLCaches[url] = html
+                                model.readerHTMLCaches[url] = html
                             }
                         }
-                        .onReaderAvailabilityChanged(using: webCoordinator) { availability in
-                            self.isReaderAvailable = availability == .available
+                        .onReaderAvailabilityChanged(using: model.webCoordinator) { availability in
+                            self.model.isReaderAvailable = availability == .available
                         }
                         .safeAreaInset(edge: .bottom) {
                             bottomBar(proxy: proxy, readerController: readerController)
@@ -58,24 +62,24 @@ struct ReaderWebView: View {
             }
         }
         .task {
-            configuration = try? await webCoordinator.createReadableWebViewConfiguration()
+            model.configuration = try? await model.webCoordinator.createReadableWebViewConfiguration()
         }
         .overlay {
-            if isLoading {
+            if model.isLoading {
                 ProgressView()
             }
         }
     }
 
     private func withLoading(_ operation: @escaping () async throws -> Void) {
-        isLoading = true
+        model.isLoading = true
         Task {
             do {
                 try await operation()
             } catch {
                 print(error)
             }
-            isLoading = false
+            model.isLoading = false
         }
     }
 
@@ -100,30 +104,30 @@ struct ReaderWebView: View {
                 .disabled(!proxy.canGoForward)
 
                 if let url = proxy.url,
-                   let html = readerHTMLCaches[url]
+                   let html = model.readerHTMLCaches[url]
                 {
                     Button {
                         Task {
-                            if isReaderPresenting {
-                                try await readerController.hideReaderOverlay()
+                            if model.isReaderPresenting {
+                                try await readerController.hideReaderContent()
                             } else {
                                 try await readerController.showReaderContent(with: html)
                             }
-                            isReaderPresenting.toggle()
+                            model.isReaderPresenting.toggle()
                         }
                     } label: {
                         Image(systemName: "text.page")
                             .resizable()
                             .scaledToFit()
                     }
-                    .symbolVariant(isReaderPresenting ? .fill : .none)
+                    .symbolVariant(model.isReaderPresenting ? .fill : .none)
 
                     Menu {
                         Menu("Theme") {
                             ForEach(ReaderStyle.Theme.allCases, id: \.self) { theme in
                                 Button(theme.rawValue) {
                                     Task {
-                                        try! await readerController.set(theme: theme)
+                                        try await readerController.set(theme: theme)
                                     }
                                 }
                             }
@@ -132,7 +136,7 @@ struct ReaderWebView: View {
                             ForEach(ReaderStyle.FontSize.allCases, id: \.self) { fontSize in
                                 Button(fontSize.rawValue.description) {
                                     Task {
-                                        try! await readerController.set(fontSize: fontSize)
+                                        try await readerController.set(fontSize: fontSize)
                                     }
                                 }
                             }
@@ -140,7 +144,7 @@ struct ReaderWebView: View {
                     } label: {
                         Image(systemName: "paintpalette")
                     }
-                    .disabled(!isReaderPresenting)
+                    .disabled(!model.isReaderPresenting)
                 }
             }
             .frame(width: 15)

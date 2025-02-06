@@ -10,8 +10,8 @@ public extension WKWebView {
         try await getReaderController().showReaderContent(with: html)
     }
 
-    func hideReaderOverlay() async throws {
-        try await getReaderController().hideReaderOverlay()
+    func hideReaderContent() async throws {
+        try await getReaderController().hideReaderContent()
     }
 
     func isReaderMode() async throws -> Bool {

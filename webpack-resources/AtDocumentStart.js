@@ -319,6 +319,7 @@ function hideReaderOverlay() {
     const overlay = document.getElementById('reader-overlay');
     if (overlay) {
         overlay.style.transition = 'opacity 0.3s ease';
+        void overlay.offsetWidth;
         overlay.style.opacity = '0';
         overlay.addEventListener("transitionend", function(e) {
             if (overlay && overlay.parentNode) {

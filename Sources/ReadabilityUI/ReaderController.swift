@@ -6,13 +6,14 @@ import ReadabilityCore
 public struct ReaderController<Runner: WebViewJavaScriptRunnable> {
     private let namespace = "window.__swift_readability__"
     private let runner: Runner
+    private let encoder = JSONEncoder()
 
     public init(runner: Runner) {
         self.runner = runner
     }
 
     public func set(style: ReaderStyle) async throws {
-        let jsonData = try JSONEncoder().encode(style)
+        let jsonData = try encoder.encode(style)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
         _ = try await runner.evaluate(
@@ -21,14 +22,14 @@ public struct ReaderController<Runner: WebViewJavaScriptRunnable> {
     }
 
     public func set(theme: ReaderStyle.Theme) async throws {
-        let jsonData = try JSONEncoder().encode(theme)
+        let jsonData = try encoder.encode(theme)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
         _ = try await runner.evaluate("\(namespace).setTheme(\(jsonString));0")
     }
 
     public func set(fontSize: ReaderStyle.FontSize) async throws {
-        let jsonData = try JSONEncoder().encode(fontSize)
+        let jsonData = try encoder.encode(fontSize)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
         _ = try await runner.evaluate("\(namespace).setFontSize(\(jsonString));0")
@@ -39,7 +40,7 @@ public struct ReaderController<Runner: WebViewJavaScriptRunnable> {
         _ = try await runner.evaluate("\(namespace).showReaderOverlay(\(escapedHTML));0")
     }
 
-    public func hideReaderOverlay() async throws {
+    public func hideReaderContent() async throws {
         _ = try await runner.evaluate("\(namespace).hideReaderOverlay();0")
     }
 
