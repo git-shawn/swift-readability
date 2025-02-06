@@ -1,0 +1,6 @@
+nestPath: ./.nest
+targets:
+- reference: nicklockwood/SwiftFormat
+  version: 0.55.5
+  assetName: swiftformat.artifactbundle.zip
+  checksum: 2c6e8903b88ca94f621586a91617c89337f53460bb3db00e3de655f96895a1a8

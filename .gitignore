@@ -8,4 +8,5 @@ DerivedData/
 .netrc
 node_modules/
 repomix-output.txt
+.nest/
 
