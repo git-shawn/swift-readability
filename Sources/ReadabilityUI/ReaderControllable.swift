@@ -25,6 +25,9 @@ extension ReaderControllable {
     /// - Parameter style: The `ReaderStyle` to apply.
     /// - Throws: An error if the JavaScript evaluation fails.
     public func set(style: ReaderStyle) async throws {
+        guard try await isReaderMode() else {
+            throw ReaderControllableError.readerStyleChangeOnlyAllowedInReaderMode
+        }
         let jsonData = try JSONEncoder().encode(style)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
@@ -38,6 +41,9 @@ extension ReaderControllable {
     /// - Parameter theme: The `ReaderStyle.Theme` to apply.
     /// - Throws: An error if the JavaScript evaluation fails.
     public func set(theme: ReaderStyle.Theme) async throws {
+        guard try await isReaderMode() else {
+            throw ReaderControllableError.readerStyleChangeOnlyAllowedInReaderMode
+        }
         let jsonData = try JSONEncoder().encode(theme)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
@@ -49,6 +55,9 @@ extension ReaderControllable {
     /// - Parameter fontSize: The `ReaderStyle.FontSize` to apply.
     /// - Throws: An error if the JavaScript evaluation fails.
     public func set(fontSize: ReaderStyle.FontSize) async throws {
+        guard try await isReaderMode() else {
+            throw ReaderControllableError.readerStyleChangeOnlyAllowedInReaderMode
+        }
         let jsonData = try JSONEncoder().encode(fontSize)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
@@ -76,8 +85,8 @@ extension ReaderControllable {
     /// - Returns: `true` if the web view is in reader mode, otherwise `false`.
     /// - Throws: An error if the JavaScript evaluation fails.
     public func isReaderMode() async throws -> Bool {
-        let isReaderMode = try await evaluateJavaScript("\(namespace).isReaderMode();") as? Bool
-        return isReaderMode ?? false
+        let isReaderMode = try await evaluateJavaScript("\(namespace).isReaderMode() ? 1 : 0") as? Int
+        return isReaderMode == 1 ? true : false
     }
 }
 
@@ -92,5 +101,17 @@ fileprivate extension String {
         return self
     }
 }
+
+public enum ReaderControllableError: LocalizedError{
+    case readerStyleChangeOnlyAllowedInReaderMode
+
+    public var errorDescription: String? {
+        switch self {
+        case .readerStyleChangeOnlyAllowedInReaderMode:
+            "ReaderStyle changes are only available when in Reader Mode."
+        }
+    }
+}
+
 
 extension WKWebView: ReaderControllable {}

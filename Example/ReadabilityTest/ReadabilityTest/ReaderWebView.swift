@@ -24,37 +24,7 @@ struct ReaderWebView: View {
     var body: some View {
         WebViewReader { proxy in
             if let configuration = model.configuration {
-                VStack(spacing: 0) {
-                    ProgressView(value: proxy.estimatedProgress, total: 1)
-                        .progressViewStyle(.linear)
-                    WebView(configuration: configuration)
-                        .uiDelegate(ReadabilityUIDelegate())
-                        .navigationDelegate(
-                            NavigationDelegate {
-                                Task { @MainActor in
-                                    model.isReaderPresenting = try await proxy.isReaderMode()
-                                }
-                            }
-                        )
-                        .ignoresSafeArea(edges: .bottom)
-                        .searchable(text: $model.urlString, isPresented: $model.isPresented)
-                        .onSubmit(of: .search) {
-                            if let url = URL(string: model.urlString) {
-                                proxy.load(request: URLRequest(url: url))
-                            }
-                        }
-                        .onReadableContentParsed(using: model.webCoordinator) { html in
-                            if let url = proxy.url {
-                                model.readerHTMLCaches[url] = html
-                            }
-                        }
-                        .onReaderAvailabilityChanged(using: model.webCoordinator) { availability in
-                            self.model.isReaderAvailable = availability == .available
-                        }
-                        .safeAreaInset(edge: .bottom) {
-                            bottomBar(proxy: proxy)
-                        }
-                }
+                core(proxy: proxy, configuration: configuration)
             } else {
                 ProgressView()
             }
@@ -66,6 +36,40 @@ struct ReaderWebView: View {
             if model.isLoading {
                 ProgressView()
             }
+        }
+    }
+
+    private func core(proxy: WebViewProxy, configuration: WKWebViewConfiguration) -> some View {
+        VStack(spacing: 0) {
+            ProgressView(value: proxy.estimatedProgress, total: 1)
+                .progressViewStyle(.linear)
+            WebView(configuration: configuration)
+                .uiDelegate(ReadabilityUIDelegate())
+                .navigationDelegate(
+                    NavigationDelegate(didFinish: {
+                        Task { @MainActor in
+                            model.isReaderPresenting = try await proxy.isReaderMode()
+                        }
+                    })
+                )
+                .ignoresSafeArea(edges: .bottom)
+                .searchable(text: $model.urlString, isPresented: $model.isPresented)
+                .onSubmit(of: .search) {
+                    if let url = URL(string: model.urlString) {
+                        proxy.load(request: URLRequest(url: url))
+                    }
+                }
+                .onReadableContentParsed(using: model.webCoordinator) { html in
+                    if let url = proxy.url {
+                        model.readerHTMLCaches[url] = html
+                    }
+                }
+                .onReaderAvailabilityChanged(using: model.webCoordinator) { availability in
+                    self.model.isReaderAvailable = availability == .available
+                }
+                .safeAreaInset(edge: .bottom) {
+                    bottomBar(proxy: proxy)
+                }
         }
     }
 
