@@ -60,9 +60,12 @@ coordinator.availabilityChanged { availability in
 }
 ```
 
-### ReaderControllable protocol
-Below are usage examples for each of the functions provided by the ReaderControllable protocol extension. 
-Since WKWebView conforms to ReaderControllable, you can call these methods directly on your WKWebView instance.
+### ReaderControllable Protocol
+
+Below are usage examples for each of the functions provided by the `ReaderControllable` protocol extension. Since `WKWebView` conforms to `ReaderControllable`, you can call these methods directly on your `WKWebView` instance.
+
+> [!WARNING]
+>  Changes to the reader style (theme and font size) are only available when the web view is in Reader Mode.
 
 ```swift
 // Set the entire reader style (theme and font size)
