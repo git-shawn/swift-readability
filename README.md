@@ -20,21 +20,26 @@ swift-readability is available via the Swift Package Manager
 ```
 
 ## Usage
+### Basic Parsing
+You can parse an article either from a URL or directly from an HTML string.<br>
+
+Parsing from a URL:
 ```swift
 let readability = Readability()
 let result = try await readability.parse(url: URL(string: "https://example.com/article")!)
 ```
 
+Parsing from an HTML string:
 ```swift
 let html = """
 <html>
-...
+    <!-- Your HTML content here -->
 </html>
 """
 let result = try await readability.parse(html: html)
 ```
 
-## Implementing Reader Mode with WKWebView
+### Implementing Reader Mode with WKWebView
 swift-readability provides a `ReadabilityWebCoordinator` that prepares a WKWebView configuration, observes availability of reader mode, and notifies when reader HTML is generated. 
 This configuration enables your WKWebView to detect when a web page is suitable for reader mode, generate a reader-friendly HTML overlay, and toggle the reader mode dynamically.
 
