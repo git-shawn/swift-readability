@@ -22,9 +22,9 @@ struct ReaderWebView: View {
     @Bindable var model = ReaderWebModel()
 
     var body: some View {
-        WebViewReader { proxy in
+        Group {
             if let configuration = model.configuration {
-                core(proxy: proxy, configuration: configuration)
+                core(configuration: configuration)
             } else {
                 ProgressView()
             }
@@ -39,37 +39,43 @@ struct ReaderWebView: View {
         }
     }
 
-    private func core(proxy: WebViewProxy, configuration: WKWebViewConfiguration) -> some View {
-        VStack(spacing: 0) {
-            ProgressView(value: proxy.estimatedProgress, total: 1)
-                .progressViewStyle(.linear)
-            WebView(configuration: configuration)
-                .uiDelegate(ReadabilityUIDelegate())
-                .navigationDelegate(
-                    NavigationDelegate(didFinish: {
-                        Task { @MainActor in
-                            model.isReaderPresenting = try await proxy.isReaderMode()
+    private func core(configuration: WKWebViewConfiguration) -> some View {
+        WebViewReader { proxy in
+            VStack(spacing: 0) {
+                ProgressView(value: proxy.estimatedProgress, total: 1)
+                    .progressViewStyle(.linear)
+                WebView(configuration: configuration)
+                    .uiDelegate(ReadabilityUIDelegate())
+                    .navigationDelegate(
+                        NavigationDelegate(didFinish: {
+                            Task { @MainActor in
+                                model.isReaderPresenting = try await proxy.isReaderMode()
+                            }
+                        })
+                    )
+                    .ignoresSafeArea(edges: .bottom)
+                    .searchable(text: $model.urlString, isPresented: $model.isPresented)
+                    .onSubmit(of: .search) {
+                        if let url = URL(string: model.urlString) {
+                            proxy.load(request: URLRequest(url: url))
                         }
-                    })
-                )
-                .ignoresSafeArea(edges: .bottom)
-                .searchable(text: $model.urlString, isPresented: $model.isPresented)
-                .onSubmit(of: .search) {
-                    if let url = URL(string: model.urlString) {
-                        proxy.load(request: URLRequest(url: url))
                     }
-                }
-                .onReadableContentParsed(using: model.webCoordinator) { html in
-                    if let url = proxy.url {
-                        model.readerHTMLCaches[url] = html
+                    .task {
+                        for await html in model.webCoordinator.contentParsed {
+                            if let url = proxy.url {
+                                model.readerHTMLCaches[url] = html
+                            }
+                        }
                     }
-                }
-                .onReaderAvailabilityChanged(using: model.webCoordinator) { availability in
-                    self.model.isReaderAvailable = availability == .available
-                }
-                .safeAreaInset(edge: .bottom) {
-                    bottomBar(proxy: proxy)
-                }
+                    .task {
+                        for await availability in model.webCoordinator.availabilityChanged {
+                            model.isReaderAvailable = availability == .available
+                        }
+                    }
+                    .safeAreaInset(edge: .bottom) {
+                        bottomBar(proxy: proxy)
+                    }
+            }
         }
     }
 

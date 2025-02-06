@@ -14,10 +14,18 @@ public final class ReadabilityWebCoordinator: ObservableObject {
     private let scriptLoader = ScriptLoader(bundle: .module)
     private let messageHandlerName = "readabilityMessageHandler"
 
-    // Closure called when readable content is parsed.
-    private var contentParsed: (@Sendable (_ html: String) -> Void)?
-    // Closure called when the reader availability changes.
-    private var availabilityChanged: (@Sendable (_ availability: ReaderAvailability) -> Void)?
+    private var (_contentParsed, contentParsedContinuation) = AsyncStream.makeStream(of: String.self)
+    private var (_availabilityChanged, availabilityChangedContinuation) = AsyncStream.makeStream(of: ReaderAvailability.self)
+
+    /// An asynchronous stream that emits the generated reader HTML when the content is parsed.
+    public var contentParsed: AsyncStream<String> {
+        _contentParsed
+    }
+
+    /// An asynchronous stream that emits updates to the reader mode availability status.
+    public var availabilityChanged: AsyncStream<ReaderAvailability> {
+        _availabilityChanged
+    }
 
     /// The initial style to apply to the reader content.
     public let initialStyle: ReaderStyle
@@ -69,9 +77,9 @@ public final class ReadabilityWebCoordinator: ObservableObject {
         messageHandler.eventHandler = { [weak self] event in
             switch event {
             case .availabilityChanged(let availability):
-                self?.availabilityChanged?(availability)
+                self?.availabilityChangedContinuation.yield(availability)
             case .contentParsedAndGeneratedHTML(html: let html):
-                self?.contentParsed?(html)
+                self?.contentParsedContinuation.yield(html)
             case .contentParsed:
                 break
             }
@@ -80,62 +88,17 @@ public final class ReadabilityWebCoordinator: ObservableObject {
         return configuration
     }
 
+    /// Invalidates the current configuration by removing all script message handlers and finishing the asynchronous streams.
+    public func invalidate() {
+        configuration?.userContentController.removeScriptMessageHandler(forName: messageHandlerName)
+        configuration?.userContentController.removeAllUserScripts()
+        contentParsedContinuation.finish()
+        availabilityChangedContinuation.finish()
+    }
+
     deinit {
         MainActor.assumeIsolated {
-            configuration?.userContentController.removeScriptMessageHandler(forName: messageHandlerName)
-            configuration?.userContentController.removeAllUserScripts()
-        }
-    }
-
-    /// Registers a closure to be called when readable content is parsed.
-    ///
-    /// - Parameter operation: A closure that receives the generated HTML as a `String`.
-    public func contentParsed(_ operation: @Sendable @escaping (_ html: String) -> Void) {
-        self.contentParsed = operation
-    }
-
-    /// Registers a closure to be called when the reader availability changes.
-    ///
-    /// - Parameter operation: A closure that receives the new `ReaderAvailability` status.
-    public func availabilityChanged(_ operation: @Sendable @escaping (_ availability: ReaderAvailability) -> Void) {
-        self.availabilityChanged = operation
-    }
-}
-
-public extension View {
-    /// Adds an action to perform when readable content is parsed.
-    ///
-    /// - Parameters:
-    ///   - coordinator: The `ReadabilityWebCoordinator` managing reader mode.
-    ///   - action: The action to perform with the generated HTML content.
-    func onReadableContentParsed(
-        using coordinator: ReadabilityWebCoordinator,
-        perform action: @MainActor @escaping (_ html: String) -> Void
-    ) -> some View {
-        onAppear {
-            coordinator.contentParsed { html in
-                Task { @MainActor in
-                    action(html)
-                }
-            }
-        }
-    }
-
-    /// Adds an action to perform when the reader availability changes.
-    ///
-    /// - Parameters:
-    ///   - coordinator: The `ReadabilityWebCoordinator` managing reader mode.
-    ///   - action: The action to perform with the new availability status.
-    func onReaderAvailabilityChanged(
-        using coordinator: ReadabilityWebCoordinator,
-        perform action: @MainActor @escaping (_ availability: ReaderAvailability) -> Void
-    ) -> some View {
-        onAppear {
-            coordinator.availabilityChanged { availability in
-                Task { @MainActor in
-                    action(availability)
-                }
-            }
+            invalidate()
         }
     }
 }
