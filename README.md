@@ -2,6 +2,19 @@
 A Swift library that wraps [@mozilla/readability](https://github.com/@mozilla/readability) and generalizes the Firefox Reader, which enhances web pages for better reading.
 This library provides a seamless way to detect, parse, and display reader-friendly content from any web page by integrating with WKWebView.
 
+![Language:Swift](https://img.shields.io/static/v1?label=Language&message=Swift&color=orange&style=flat-square)
+![License:MIT](https://img.shields.io/static/v1?label=License&message=MIT&color=blue&style=flat-square)
+[![Latest Release](https://img.shields.io/github/v/release/Ryu0118/swift-readability?style=flat-square)](https://github.com/Ryu0118/swift-readability/releases/latest)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FRyu0118%2Fswift-readability%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Ryu0118/swift-readability)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FRyu0118%2Fswift-readability%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Ryu0118/swift-readability)
+[![X](https://img.shields.io/twitter/follow/ryu_hu03?style=social)](https://x.com/ryu_hu03)
+
+
+|  light  |  dark  |  sepia  |
+| ---- | ---- | ---- |
+|  <img src="https://github.com/user-attachments/assets/ed112ac7-1f01-4b64-97d1-a22f78968cc8" width="200">  |  <img src="https://github.com/user-attachments/assets/2be2c140-d17e-444f-8a33-6c66e0203058" width="200">  |  <img src="https://github.com/user-attachments/assets/cccb813b-3e02-41da-a944-d9f786518d6d" width="200">  |
+
+
 ## Features
 - **Parsing** <br>
 Parse a URL or HTML string into a structured article using [@mozilla/readability](https://github.com/@mozilla/readability).
