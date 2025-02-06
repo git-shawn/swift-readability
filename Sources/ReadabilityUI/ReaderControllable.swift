@@ -3,52 +3,53 @@ import WebKit
 import ReadabilityCore
 
 @MainActor
-public struct ReaderController<Runner: WebViewJavaScriptRunnable> {
-    private let namespace = "window.__swift_readability__"
-    private let runner: Runner
-    private let encoder = JSONEncoder()
+public protocol ReaderControllable {
+    func evaluateJavaScript(_ javascriptString: String) async throws -> Any
+}
 
-    public init(runner: Runner) {
-        self.runner = runner
+extension ReaderControllable {
+    private var namespace: String {
+        "window.__swift_readability__"
     }
 
     public func set(style: ReaderStyle) async throws {
-        let jsonData = try encoder.encode(style)
+        let jsonData = try JSONEncoder().encode(style)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
-        _ = try await runner.evaluate(
+        _ = try await evaluateJavaScript(
             "\(namespace).setStyle(\(jsonString));0"
         )
     }
 
     public func set(theme: ReaderStyle.Theme) async throws {
-        let jsonData = try encoder.encode(theme)
+        let jsonData = try JSONEncoder().encode(theme)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
-        _ = try await runner.evaluate("\(namespace).setTheme(\(jsonString));0")
+        _ = try await evaluateJavaScript("\(namespace).setTheme(\(jsonString));0")
     }
 
     public func set(fontSize: ReaderStyle.FontSize) async throws {
-        let jsonData = try encoder.encode(fontSize)
+        let jsonData = try JSONEncoder().encode(fontSize)
         let jsonString = String(data: jsonData, encoding: .utf8)!
 
-        _ = try await runner.evaluate("\(namespace).setFontSize(\(jsonString));0")
+        _ = try await evaluateJavaScript("\(namespace).setFontSize(\(jsonString));0")
     }
 
     public func showReaderContent(with html: String) async throws {
         let escapedHTML = html.jsonEscaped
-        _ = try await runner.evaluate("\(namespace).showReaderOverlay(\(escapedHTML));0")
+        _ = try await evaluateJavaScript("\(namespace).showReaderOverlay(\(escapedHTML));0")
     }
 
     public func hideReaderContent() async throws {
-        _ = try await runner.evaluate("\(namespace).hideReaderOverlay();0")
+        _ = try await evaluateJavaScript("\(namespace).hideReaderOverlay();0")
     }
 
     public func isReaderMode() async throws -> Bool {
-        let isReaderMode = try await runner.evaluate("\(namespace).isReaderMode();") as? Bool
+        let isReaderMode = try await evaluateJavaScript("\(namespace).isReaderMode();") as? Bool
         return isReaderMode ?? false
     }
 }
+
 
 fileprivate extension String {
     var jsonEscaped: String {
@@ -61,3 +62,5 @@ fileprivate extension String {
         return self
     }
 }
+
+extension WKWebView: ReaderControllable {}

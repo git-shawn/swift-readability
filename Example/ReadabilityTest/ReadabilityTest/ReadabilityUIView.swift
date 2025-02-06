@@ -23,8 +23,6 @@ struct ReaderWebView: View {
 
     var body: some View {
         WebViewReader { proxy in
-            let readerController = ReaderController(runner: JSRunner(proxy: proxy))
-
             if let configuration = model.configuration {
                 VStack(spacing: 0) {
                     ProgressView(value: proxy.estimatedProgress, total: 1)
@@ -34,7 +32,7 @@ struct ReaderWebView: View {
                         .navigationDelegate(
                             NavigationDelegate {
                                 Task { @MainActor in
-                                    model.isReaderPresenting = try await readerController.isReaderMode()
+                                    model.isReaderPresenting = try await proxy.isReaderMode()
                                 }
                             }
                         )
@@ -54,7 +52,7 @@ struct ReaderWebView: View {
                             self.model.isReaderAvailable = availability == .available
                         }
                         .safeAreaInset(edge: .bottom) {
-                            bottomBar(proxy: proxy, readerController: readerController)
+                            bottomBar(proxy: proxy)
                         }
                 }
             } else {
@@ -83,7 +81,7 @@ struct ReaderWebView: View {
         }
     }
 
-    private func bottomBar(proxy: WebViewProxy, readerController: ReaderController<JSRunner>) -> some View {
+    private func bottomBar(proxy: WebViewProxy) -> some View {
         HStack(spacing: 12) {
             Group {
                 Button {
@@ -109,9 +107,9 @@ struct ReaderWebView: View {
                     Button {
                         Task {
                             if model.isReaderPresenting {
-                                try await readerController.hideReaderContent()
+                                try await proxy.hideReaderContent()
                             } else {
-                                try await readerController.showReaderContent(with: html)
+                                try await proxy.showReaderContent(with: html)
                             }
                             model.isReaderPresenting.toggle()
                         }
@@ -127,7 +125,7 @@ struct ReaderWebView: View {
                             ForEach(ReaderStyle.Theme.allCases, id: \.self) { theme in
                                 Button(theme.rawValue) {
                                     Task {
-                                        try await readerController.set(theme: theme)
+                                        try await proxy.set(theme: theme)
                                     }
                                 }
                             }
@@ -136,7 +134,7 @@ struct ReaderWebView: View {
                             ForEach(ReaderStyle.FontSize.allCases, id: \.self) { fontSize in
                                 Button(fontSize.rawValue.description) {
                                     Task {
-                                        try await readerController.set(fontSize: fontSize)
+                                        try await proxy.set(fontSize: fontSize)
                                     }
                                 }
                             }
@@ -176,11 +174,8 @@ final class NavigationDelegate: NSObject, WKNavigationDelegate {
     }
 }
 
-@MainActor
-struct JSRunner: WebViewJavaScriptRunnable {
-    let proxy: WebViewProxy
-
-    func evaluate(_ script: String) async throws -> Any? {
-        try await proxy.evaluateJavaScript(script)
+extension WebViewProxy: @retroactive ReaderControllable {
+    public func evaluateJavaScript(_ javascriptString: String) async throws -> Any {
+        try await evaluateJavaScript(javascriptString)
     }
 }
