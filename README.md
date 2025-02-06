@@ -38,6 +38,51 @@ let result = try await readability.parse(html: html)
 swift-readability provides a `ReadabilityWebCoordinator` that prepares a WKWebView configuration, observes availability of reader mode, and notifies when reader HTML is generated. 
 This configuration enables your WKWebView to detect when a web page is suitable for reader mode, generate a reader-friendly HTML overlay, and toggle the reader mode dynamically.
 
+```swift
+let coordinator = ReadabilityWebCoordinator(initialStyle: ReaderStyle(theme: .dark, fontSize: .size5))
+let webView = WKWebView(frame: .zero, configuration: configuration)
+
+// This closure is called when the reader mode HTML is generated.
+coordinator.contentParsed { html in
+    Task {
+        do {
+            
+            try await webView.showReaderContent(with: html)
+        } catch {
+            // handle the error here
+        }
+    }
+}
+
+// This closure is triggered when the availability of reader mode on the current webpage changes.
+coordinator.availabilityChanged { availability in
+    // For example, disable or enable the reader mode button.
+}
+```
+
+### ReaderControllable protocol
+Below are usage examples for each of the functions provided by the ReaderControllable protocol extension. 
+Since WKWebView conforms to ReaderControllable, you can call these methods directly on your WKWebView instance.
+
+```swift
+// Set the entire reader style (theme and font size)
+try await webView.set(style: ReaderStyle(theme: .dark, fontSize: .size5))
+
+// Set only the reader theme (supports sepia, light, and dark).
+try await webView.set(theme: .sepia)
+
+// Set only the font size
+try await webView.set(fontSize: .size7)
+
+// Show the reader overlay using the HTML received from the ReadabilityWebCoordinator.contentParsed(_:) event.
+try await webView.showReaderContent(with: html)
+
+// Hide the reader overlay.
+try await webView.hideReaderContent()
+
+// Determine if the web view is currently in reader mode.
+let isReaderMode = try await webView.isReaderMode()
+```
 
 ## Credits
 This library uses [mozilla/readability](https://github.com/mozilla/readability) for parsing and cleaning web content.
